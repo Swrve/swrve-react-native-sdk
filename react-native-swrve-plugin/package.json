@@ -1,0 +1,34 @@
+{
+    "name": "react-native-swrve-plugin",
+    "title": "React Native Swrve Plugin",
+    "version": "1.0.0",
+    "description": "React Native Plugin for Swrve",
+    "main": "./lib/SwrveSDK.js",
+    "types": "./index.d.ts",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Swrve/swrve-react-native-sdk.git",
+        "baseUrl": "https://github.com/Swrve/swrve-react-native-sdk"
+    },
+    "keywords": [ "swrve", "analytics", "messaging", "react-native", "react-native-ios", "react-native-android" ],
+    "author": {
+        "name": "Swrve Mobile Inc or its licensors",
+        "email": "success@swrve.com"
+    },
+    "license": "Apache License, Version 2.0",
+    "readmeFilename": "README.md",
+    "bugs": {
+        "url": "https://github.com/Swrve/swrve-react-native-sdk/issues"
+    },
+    "peerDependencies": {
+        "react": "^16.8.1",
+        "react-native": ">=0.60.0-rc.0 <1.0.x"
+    },
+    "devDependencies": {
+        "react": "^16.9.0",
+        "react-native": "^0.62.2"
+    }
+}
