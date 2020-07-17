@@ -6,7 +6,7 @@ Swrve is a single integrated platform delivering everything you need to drive mo
 
 ## Getting started
 
-We recommend you read our [integration guide](http://docs.swrve.com/developer-documentation/integration/reactnative/) before attempting to download and add to the sourcecode yourself.
+We recommend you read our [integration guide](http://docs.swrve.com/developer-documentation/integration/react-native/) before attempting to download and add to the sourcecode yourself.
 
 ## License
 
