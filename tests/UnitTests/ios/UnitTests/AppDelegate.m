@@ -5,12 +5,12 @@
 #import <React/RCTRootView.h>
 
 #if DEBUG
-#import <FlipperKit/FlipperClient.h>
-#import <FlipperKitLayoutPlugin/FlipperKitLayoutPlugin.h>
-#import <FlipperKitUserDefaultsPlugin/FKUserDefaultsPlugin.h>
-#import <FlipperKitNetworkPlugin/FlipperKitNetworkPlugin.h>
-#import <SKIOSNetworkPlugin/SKIOSNetworkAdapter.h>
-#import <FlipperKitReactPlugin/FlipperKitReactPlugin.h>
+//#import <FlipperKit/FlipperClient.h>
+//#import <FlipperKitLayoutPlugin/FlipperKitLayoutPlugin.h>
+//#import <FlipperKitUserDefaultsPlugin/FKUserDefaultsPlugin.h>
+//#import <FlipperKitNetworkPlugin/FlipperKitNetworkPlugin.h>
+//#import <SKIOSNetworkPlugin/SKIOSNetworkAdapter.h>
+//#import <FlipperKitReactPlugin/FlipperKitReactPlugin.h>
 #endif
 
 @implementation AppDelegate

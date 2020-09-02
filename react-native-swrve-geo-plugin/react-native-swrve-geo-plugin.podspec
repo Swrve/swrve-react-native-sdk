@@ -11,12 +11,12 @@ Pod::Spec.new do |s|
   s.authors      = { package["author"]["name"] => package["author"]["email"]}
 
   s.source       = { :git => package["repository"]["url"], :tag => "#{s.version}" }
-  s.source_files = "ios/**/*.{h,m,swift}"
+  s.source_files = "ios/**/*.{h,c,m,swift}"
 
   s.platforms    = { :ios => "9.0" }
   s.requires_arc = true
 
   s.dependency "React"
-  s.dependency "SwrveSDK", "6.6.0"
+  s.dependency "SwrveGeoSDK", "4.0.0"
+  s.dependency "SwrveSDKCommon", "6.6.0"
 end
-

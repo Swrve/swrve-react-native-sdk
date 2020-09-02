@@ -41,8 +41,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.facebook.react:react-native:+'
-    implementation 'com.swrve.sdk.android:swrve-firebase:7.2.0'
-    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.facebook.react:react-native:+'  // From node_modules
+    implementation 'com.swrve.sdk.android:swrve-geo:5.0.0' // Swrve Geo dependency
 }
 
