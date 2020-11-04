@@ -186,7 +186,7 @@ PODS:
     - React-cxxreact (= 0.63.3)
     - React-jsi (= 0.63.3)
   - React-jsinspector (0.63.3)
-  - react-native-swrve-plugin (1.2.0):
+  - react-native-swrve-plugin (1.2.1):
     - React
     - SwrveSDK (= 6.7.0)
   - React-RCTActionSheet (0.63.3):

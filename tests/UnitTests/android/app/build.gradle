@@ -225,7 +225,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:3.0.0'
     testImplementation 'com.google.truth:truth:1.0.1'
-    implementation 'com.swrve.sdk.android:swrve-firebase:7.3.1'
+    implementation 'com.swrve.sdk.android:swrve-firebase:7.3.2'
     implementation 'com.swrve.sdk.android:swrve-geo:5.0.0'
 
     if (enableHermes) {
