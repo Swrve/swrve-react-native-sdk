@@ -7,7 +7,7 @@
 #import <SwrveSDK/SwrveSDK.h>
 #import <SwrveSDK/SwrveCampaign.h>
 
-#define SWRVE_PLUGIN_VERSION "1.2.1"
+#define SWRVE_PLUGIN_VERSION "1.3.0"
 
 @interface SwrvePlugin ()
 
@@ -16,6 +16,9 @@
 @end
 
 @implementation SwrvePlugin
+
+NSString *const SwrveSilentPushIdentifierKey = @"_sp";
+NSString *const SwrveSilentPushPayloadKey = @"_s.SilentPayload";
 
 @dynamic swrveInstance;
 

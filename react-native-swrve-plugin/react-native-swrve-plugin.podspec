@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
   s.platforms    = { :ios => "9.0" }
   s.requires_arc = true
 
-  s.dependency "React"
-  s.dependency "SwrveSDK", "6.7.0"
+  s.dependency "React-Core"
+  s.dependency "SwrveSDK", "6.8.1"
 end
 

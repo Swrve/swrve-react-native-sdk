@@ -188,7 +188,7 @@ PODS:
   - React-jsinspector (0.63.3)
   - react-native-swrve-plugin (1.2.1):
     - React
-    - SwrveSDK (= 6.7.0)
+    - SwrveSDK (= 6.8.1)
   - React-RCTActionSheet (0.63.3):
     - React-Core/RCTActionSheetHeaders (= 0.63.3)
   - React-RCTAnimation (0.63.3):
@@ -249,12 +249,12 @@ PODS:
     - React-Core (= 0.63.3)
     - React-cxxreact (= 0.63.3)
     - React-jsi (= 0.63.3)
-  - SwrveConversationSDK (6.7.0):
-    - SwrveSDKCommon (= 6.7.0)
-  - SwrveSDK (6.7.0):
-    - SwrveConversationSDK (= 6.7.0)
-    - SwrveSDKCommon (= 6.7.0)
-  - SwrveSDKCommon (6.7.0)
+  - SwrveConversationSDK (6.8.1):
+    - SwrveSDKCommon (= 6.8.1)
+  - SwrveSDK (6.8.1):
+    - SwrveConversationSDK (= 6.8.1)
+    - SwrveSDKCommon (= 6.8.1)
+  - SwrveSDKCommon (6.8.1)
   - Yoga (1.14.0)
 
 DEPENDENCIES:
@@ -371,7 +371,7 @@ SPEC CHECKSUMS:
   React-jsi: df07aa95b39c5be3e41199921509bfa929ed2b9d
   React-jsiexecutor: b56c03e61c0dd5f5801255f2160a815f4a53d451
   React-jsinspector: 8e68ffbfe23880d3ee9bafa8be2777f60b25cbe2
-  react-native-swrve-plugin: 9b3fef977a43f9790742a431721bdfe5f9bc5431
+  react-native-swrve-plugin: 5cf41f5ad2d517f911c135e03b48cf8d5590c165
   React-RCTActionSheet: 53ea72699698b0b47a6421cb1c8b4ab215a774aa
   React-RCTAnimation: 1befece0b5183c22ae01b966f5583f42e69a83c2
   React-RCTBlob: 0b284339cbe4b15705a05e2313a51c6d8b51fa40
@@ -382,11 +382,11 @@ SPEC CHECKSUMS:
   React-RCTText: 65a6de06a7389098ce24340d1d3556015c38f746
   React-RCTVibration: 8e9fb25724a0805107fc1acc9075e26f814df454
   ReactCommon: 4167844018c9ed375cc01a843e9ee564399e53c3
-  SwrveConversationSDK: 14b54b5832c417da7b175153497ec079439f776b
-  SwrveSDK: 98c61199cbe0776ba52dee00a84d499a11f95ae0
-  SwrveSDKCommon: d8acefbd9f735f0bf7df592976c050b643b94dc2
+  SwrveConversationSDK: e43773a451a61256789df70c2c568cd47e06c1cd
+  SwrveSDK: 44a5f2867108e9e8ee86fd54e8220c9eac4153ad
+  SwrveSDKCommon: fc7cb77519d1aa4ca482eb253064dc75a5174ebf
   Yoga: 7d13633d129fd179e01b8953d38d47be90db185a
 
-PODFILE CHECKSUM: faf8aa318859916502209fcb40af864630b01bdb
+PODFILE CHECKSUM: 9c0e5d180bc8aa03552f337788cac9df54c0ec1e
 
 COCOAPODS: 1.10.0
