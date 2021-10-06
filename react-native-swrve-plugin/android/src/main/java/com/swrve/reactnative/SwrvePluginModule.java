@@ -20,6 +20,9 @@ import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.google.gson.Gson;
 import com.swrve.sdk.ISwrveBase;
+import com.swrve.sdk.ISwrveCampaignManager;
+import com.swrve.sdk.Swrve;
+import com.swrve.sdk.SwrveCampaignDisplayer;
 import com.swrve.sdk.SwrveIAPRewards;
 import com.swrve.sdk.SwrveIdentityResponse;
 import com.swrve.sdk.SwrvePushNotificationListener;
@@ -30,12 +33,17 @@ import com.swrve.sdk.SwrveSDK;
 import com.swrve.sdk.SwrveSilentPushListener;
 import com.swrve.sdk.SwrveRealTimeUserPropertiesListener;
 import com.swrve.sdk.config.SwrveConfig;
+import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
+import com.swrve.sdk.localstorage.LocalStorage;
+import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveDismissButtonListener;
-import com.swrve.sdk.messaging.SwrveInstallButtonListener;
+import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,6 +52,7 @@ import org.json.JSONArray;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -59,7 +68,7 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     final static String LOG_TAG = "SwrvePluginModule";
     static SwrveListenerDelegateHolder delegateHolder = new SwrveListenerDelegateHolder();
 
-    public static String SWRVE_PLUGIN_VERSION = "1.3.0";
+    public static String SWRVE_PLUGIN_VERSION = "2.0.0";
     private final String MODULE_NAME = "SwrvePlugin";
     private final ReactApplicationContext reactContext;
 
@@ -175,6 +184,10 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
         // Override all inApp callbacks for button action listeners
         SwrveInAppMessageConfig inAppConfig = setupInAppMessageConfig(config);
         config.setInAppMessageConfig(inAppConfig);
+
+        // Override all embedded callbacks for embedded action listeners
+        SwrveEmbeddedMessageConfig embeddedConfig = setUpEmbeddedMessageConfig(config);
+        config.setEmbeddedMessageConfig(embeddedConfig);
 
         SwrveSDK.createInstance(application, appId, apiKey, config);
         sendPluginVersion();
@@ -418,7 +431,6 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
             } else {
                 campaigns = getSwrveInstance().getMessageCenterCampaigns();
             }
-
             JSONArray result = new JSONArray();
 
             for (SwrveBaseCampaign campaign : campaigns) {
@@ -504,11 +516,66 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void markEmbeddedMessageCampaignAsSeen(int campaignId) {
+        SwrveEmbeddedCampaign EmbeddedCampaign = findEmbeddedCampaignByID(campaignId);
+
+        if (EmbeddedCampaign != null) {
+            getSwrveInstance().embeddedMessageWasShownToUser(EmbeddedCampaign.getMessage());
+        } else {
+            Log.e(LOG_TAG, "Unable to find campaign of id: " + campaignId);
+        }
+    }
+
+    @ReactMethod
+    public void markEmbeddedMessageButtonAsPressed(int campaignId, String buttonName) {
+        SwrveEmbeddedCampaign EmbeddedCampaign = findEmbeddedCampaignByID(campaignId);
+
+        if (EmbeddedCampaign != null) {
+            getSwrveInstance().embeddedMessageButtonWasPressed(EmbeddedCampaign.getMessage(), buttonName);
+        } else {
+            Log.e(LOG_TAG, "Unable to find campaign of id: " + campaignId);
+        }
+    }
+
+    @ReactMethod
+    public void getPersonalizedText(String text, ReadableMap personalizationProperties, final Promise promise) {
+        try {
+            String personalizedText = getSwrveInstance().getPersonalizedText(text, SwrvePluginUtils.convertToStringMap(personalizationProperties));
+            promise.resolve(personalizedText);
+        } catch (RuntimeException runtime) {
+            promise.reject(EXCEPTION, runtime.toString());
+        }
+    }
+
+    @ReactMethod
+    public void getPersonalizedEmbeddedMessageData(int campaignId, ReadableMap personalizationProperties, final Promise promise) {
+        try {
+            SwrveEmbeddedCampaign EmbeddedCampaign = findEmbeddedCampaignByID(campaignId);
+            String personalizedEmbeddedMessageData = "";
+
+            if (EmbeddedCampaign != null) {
+                personalizedEmbeddedMessageData = getSwrveInstance().getPersonalizedEmbeddedMessageData(EmbeddedCampaign.getMessage(), SwrvePluginUtils.convertToStringMap(personalizationProperties));
+            } else {
+                Log.e(LOG_TAG, "Unable to find campaign of id: " + campaignId);
+            }
+
+            promise.resolve(personalizedEmbeddedMessageData);
+        } catch (RuntimeException runtime) {
+            promise.reject(EXCEPTION, runtime.toString());
+        }
+    }
+
+    @ReactMethod
     public void refreshCampaignsAndResources() {
         getSwrveInstance().refreshCampaignsAndResources();
     }
 
-    // Listener Methods
+    @ReactMethod
+    public void stopTracking() {
+        getSwrveInstance().stopTracking();
+    }
+
+        // Listener Methods
     @ReactMethod
     public void startedListening() {
         delegateHolder.setShouldBufferEvents(false);
@@ -525,14 +592,8 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
         delegateHolder.delegate.setListeningCustom(true);
     }
 
-    @ReactMethod
-    public void listeningInstall() {
-        delegateHolder.delegate.setListeningInstall(true);
-    }
-
     // Private Methods
     private SwrveBaseCampaign findMessageCenterCampaignbyID(int identifier) {
-
         List<SwrveBaseCampaign> campaigns = getSwrveInstance().getMessageCenterCampaigns();
         SwrveBaseCampaign canditateCampaign = null;
 
@@ -542,6 +603,32 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
             }
         }
 
+        return canditateCampaign;
+    }
+
+    private String getCache() {
+        Swrve swrve = (Swrve) getSwrveInstance();
+        String cache = swrve.getCachedData(swrve.getUserId(), swrve.CACHE_CAMPAIGNS);
+        return cache;
+    }
+
+    private SwrveEmbeddedCampaign findEmbeddedCampaignByID(int identifier) {
+        String cacheStr = getCache();
+        SwrveEmbeddedCampaign canditateCampaign = null;
+
+        try {
+            JSONObject cache = new JSONObject(cacheStr);
+            JSONArray campaigns = cache.getJSONArray("campaigns");
+
+            for (int i = 0; i < campaigns.length(); i++) {
+                JSONObject campaignData = campaigns.getJSONObject(i);
+                if (campaignData.getInt("id") == identifier) {
+                    canditateCampaign = new SwrveEmbeddedCampaign((ISwrveCampaignManager) getSwrveInstance(), new SwrveCampaignDisplayer(), campaignData);
+                }
+            }
+        } catch (JSONException e) {
+            Log.e(LOG_TAG, "Unable to access cache: %s", e);
+        }
         return canditateCampaign;
     }
 
@@ -565,21 +652,9 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
             inAppConfigBuilder.clickColor(passedInAppConfig.getClickColor());
             inAppConfigBuilder.focusColor(passedInAppConfig.getFocusColor());
             inAppConfigBuilder.defaultBackgroundColor(passedInAppConfig.getDefaultBackgroundColor());
-            inAppConfigBuilder.personalisedTextTypeface(passedInAppConfig.getPersonalisedTextTypeface());
-            inAppConfigBuilder.personalisedTextBackgroundColor(passedInAppConfig.getPersonalisedTextBackgroundColor());
-            inAppConfigBuilder.personalisedTextForegroundColor(passedInAppConfig.getPersonalisedTextForegroundColor());
-        }
-
-        // Set Install Button Listener
-        if (passedInAppConfig.getInstallButtonListener() == null) {
-            inAppConfigBuilder.installButtonListener(new SwrveInstallButtonListener() {
-                @Override
-                public boolean onAction(String appStoreLink) {
-                    return delegateHolder.delegate.onInstallAction(appStoreLink);
-                }
-            });
-        } else {
-            inAppConfigBuilder.installButtonListener(passedInAppConfig.getInstallButtonListener());
+            inAppConfigBuilder.personalizedTextTypeface(passedInAppConfig.getPersonalizedTextTypeface());
+            inAppConfigBuilder.personalizedTextBackgroundColor(passedInAppConfig.getPersonalizedTextBackgroundColor());
+            inAppConfigBuilder.personalizedTextForegroundColor(passedInAppConfig.getPersonalizedTextForegroundColor());
         }
 
         // Set Custom Button Listener
@@ -620,11 +695,31 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
         }
 
         // Set Personalisation Provider if the passed in config has set it
-        if (passedInAppConfig.getPersonalisationProvider() != null) {
-            inAppConfigBuilder.personalisationProvider(passedInAppConfig.getPersonalisationProvider());
+        if (passedInAppConfig.getPersonalizationProvider() != null) {
+            inAppConfigBuilder.personalizationProvider(passedInAppConfig.getPersonalizationProvider());
         }
 
         return inAppConfigBuilder.build();
+    }
+
+    private static SwrveEmbeddedMessageConfig setUpEmbeddedMessageConfig(SwrveConfig config) {
+        SwrveEmbeddedMessageConfig.Builder embeddedMessageConfigBuilder = new SwrveEmbeddedMessageConfig.Builder();
+
+        // Previous Config (just in case it was passed as part of Application.java)
+        SwrveEmbeddedMessageConfig passedEmbeddedMessageConfig = config.getEmbeddedMessageConfig();
+
+        if(passedEmbeddedMessageConfig != null && passedEmbeddedMessageConfig.getEmbeddedMessageListener() != null) {
+            // If the embedded config has been set and a listener has been implemented use that listener
+            embeddedMessageConfigBuilder.embeddedMessageListener(passedEmbeddedMessageConfig.getEmbeddedMessageListener());
+        } else {
+            embeddedMessageConfigBuilder.embeddedMessageListener(new SwrveEmbeddedMessageListener() {
+                @Override
+                public void onMessage(Context context, SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
+                    delegateHolder.delegate.onEmbeddedMessageCallback(message, personalizationProperties);
+                }
+            });
+        }
+        return embeddedMessageConfigBuilder.build();
     }
 
 }

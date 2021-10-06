@@ -5,17 +5,18 @@ class SwrveSDK {
     static PUSH_EVENT_NAME = 'PushNotification';
     static SILENT_PUSH_EVENT_NAME = 'SilentPushNotification';
     static PUSH_EVENT_PAYLOAD = 'PushEventPayload';
-    static CALLBACK_KEY_INSTALL_BUTTON_APPSTORE_URL = 'appStoreUrl';
     static CALLBACK_KEY_CUSTOM_BUTTON_ACTION = 'customAction';
     static CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT = 'campaignSubject';
     static CALLBACK_KEY_DISMISS_BUTTON_NAME = 'buttonName';
     static CALLBACK_KEY_CLIPBOARD_BUTTON_PROCESSED_TEXT = 'clipboardContents';
+    static CALLBACK_KEY_EMBEDDED_MESSAGE_PERSONALIZATION_PROPERTIES_MAP = "embeddedMessagePersonalizationProperties";
+    static CALLBACK_KEY_EMBEDDED_MESSAGE_MAP = "embeddedMessage";
 
     static RESOURCES_UPDATED_EVENT_NAME = 'SwrveUserResourcesUpdated';
-    static MESSAGE_CALLBACK_INSTALL_EVENT_NAME = 'SwrveMessageInstallCallback';
     static MESSAGE_CALLBACK_CUSTOM_EVENT_NAME = 'SwrveMessageCustomCallback';
     static MESSAGE_CALLBACK_DISMISS_EVENT_NAME = 'SwrveMessageDismissCallback';
     static MESSAGE_CALLBACK_CLIPBOARD_EVENT_NAME = 'SwrveMessageClipboardCallback';
+    static EMBEDDED_MESSAGE_CALLBACK_EVENT_NAME = "SwrveEmbeddedMessageCallback";
 
     Notifications = {
         // Notification types
@@ -26,17 +27,17 @@ class SwrveSDK {
     _pushListener = null;
     _silentPushListener = null;
     _userResourcesListener = null;
-    _messageInstallButtonListener = null;
     _messageCustomButtonListener = null;
     _messageDismissButtonListener = null;
     _messageClipboardButtonListener = null;
+    _embeddedMessageCampaignListener = null;
 
     constructor(listener) {
         this._eventEmitter = new NativeEventEmitter(NativeModules.SwrvePluginEventEmitter);
     }
 
     // This method doesn't get passed to the native-side
-    setListeners(listeners, pushListeners, messageListeners) {
+    setListeners(listeners, pushListeners, messageListeners, embeddedMessageListeners) {
         // Remove any pre-existing handlers in case this function has been called already
         if (this._eventHandlers.pushEventHandler) {
             this._eventHandlers.pushEventHandler.remove();
@@ -50,10 +51,6 @@ class SwrveSDK {
             this._eventHandlers.resourceUpdatedEventHandler.remove();
         }
 
-        if (this._eventHandlers.installButtonEventHandler) {
-            this._eventHandlers.installButtonEventHandler.remove();
-        }
-
         if (this._eventHandlers.customButtonEventHandler) {
             this._eventHandlers.customButtonEventHandler.remove();
         }
@@ -64,6 +61,10 @@ class SwrveSDK {
 
         if (this._eventHandlers.clipboardButtonEventHandler) {
             this._eventHandlers.clipboardButtonEventHandler.remove();
+        }
+
+        if (this._eventHandlers.embeddedMessageCampaignListener) {
+            this._eventHandlers.embeddedMessageCampaignListener.remove();
         }
 
         if (listeners) {
@@ -82,27 +83,29 @@ class SwrveSDK {
             }
         }
 
+        if (embeddedMessageListeners) {
+            this._embeddedMessageCampaignListener = embeddedMessageListeners.embeddedMessageCampaignListener
+
+            if (embeddedMessageListeners.embeddedMessageCampaignListener) {
+                this._eventHandlers.embeddedMessageCampaignListener = this._eventEmitter.addListener(
+                    SwrveSDK.EMBEDDED_MESSAGE_CALLBACK_EVENT_NAME,
+                    (event) => {
+                        console.log('SwrveSDK - embeddedMessageCampaignListener');
+                        this._embeddedMessageCampaignListener(
+                            event[SwrveSDK.CALLBACK_KEY_EMBEDDED_MESSAGE_MAP],
+                            event[SwrveSDK.CALLBACK_KEY_EMBEDDED_MESSAGE_PERSONALIZATION_PROPERTIES_MAP]
+                        );
+                    }
+                );
+            }
+        }
+
         if (messageListeners) {
             // MessageListeners
-            this._messageInstallButtonListener = messageListeners.installButtonPressedListener;
             this._messageCustomButtonListener = messageListeners.customButtonPressedListener;
             this._messageDismissButtonListener = messageListeners.dismissButtonPressedListener;
             this._messageClipboardButtonListener = messageListeners.clipboardButtonPressedListener;
 
-            if (messageListeners.installButtonPressedListener) {
-                this._eventHandlers.installButtonEventHandler = this._eventEmitter.addListener(
-                    SwrveSDK.MESSAGE_CALLBACK_INSTALL_EVENT_NAME,
-                    (event) => {
-                        if (this._messageInstallButtonListener) {
-                            console.log('SwrveSDK - installButtonListener');
-                            this._messageInstallButtonListener(
-                                event[SwrveSDK.CALLBACK_KEY_INSTALL_BUTTON_APPSTORE_URL]
-                            );
-                        }
-                    }
-                );
-                SwrvePlugin.listeningInstall();
-            }
 
             if (messageListeners.customButtonPressedListener) {
                 this._eventHandlers.customButtonEventHandler = this._eventEmitter.addListener(
@@ -261,6 +264,14 @@ class SwrveSDK {
         return SwrvePlugin.getMessageCenterCampaigns(personalization);
     }
 
+    async getPersonalizedText(text, personalizationProperties) {
+        return SwrvePlugin.getPersonalizedText(text, personalizationProperties);
+    }
+
+    async getPersonalizedEmbeddedMessageData(campaignId, personalizationProperties) {
+        return SwrvePlugin.getPersonalizedEmbeddedMessageData(campaignId, personalizationProperties);
+    }
+
     async showMessageCenterCampaign(campaignId, personalization) {
         return SwrvePlugin.showMessageCenterCampaign(campaignId, personalization);
     }
@@ -271,6 +282,18 @@ class SwrveSDK {
 
     async markMessageCenterCampaignAsSeen(campaignId) {
         return SwrvePlugin.markMessageCenterCampaignAsSeen(campaignId);
+    }
+
+    async markEmbeddedMessageCampaignAsSeen(campaignId) {
+        return SwrvePlugin.markEmbeddedMessageCampaignAsSeen(campaignId);
+    }
+
+    async markEmbeddedMessageButtonAsPressed(campaignId, button) {
+        return SwrvePlugin.markEmbeddedMessageButtonAsPressed(campaignId, button);
+    }
+
+    async stopTracking() {
+        return SwrvePlugin.stopTracking();
     }
 }
 

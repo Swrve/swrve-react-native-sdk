@@ -7,7 +7,7 @@
 #import <SwrveSDK/SwrveSDK.h>
 #import <SwrveSDK/SwrveCampaign.h>
 
-#define SWRVE_PLUGIN_VERSION "1.3.0"
+#define SWRVE_PLUGIN_VERSION "2.0.0"
 
 @interface SwrvePlugin ()
 
@@ -31,7 +31,41 @@ RCT_EXPORT_MODULE()
     if (config == nil) {
         config = [SwrveConfig new];
     }
-    
+
+    if (config.inAppMessageConfig == nil){
+        config.inAppMessageConfig = [SwrveInAppMessageConfig new];
+    }
+
+    if (config.embeddedMessageConfig == nil) {
+        config.embeddedMessageConfig = [SwrveEmbeddedMessageConfig new];
+    }
+
+    // Set callbacks
+    if([config.inAppMessageConfig dismissButtonCallback] == nil) {
+        [config.inAppMessageConfig setDismissButtonCallback:^(NSString *campaignSubject, NSString *buttonName) {
+           [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_DISMISS_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT: campaignSubject, CALLBACK_KEY_DISMISS_BUTTON_NAME: buttonName}];
+        }];
+    }
+
+    if([config.inAppMessageConfig customButtonCallback] == nil) {
+        [config.inAppMessageConfig setCustomButtonCallback:^(NSString *action) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_CUSTOM_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_CUSTOM_BUTTON_ACTION: action}];
+            [SwrvePlugin handleCustom:action];
+        }];
+    }
+
+    if([config.inAppMessageConfig clipboardButtonCallback] == nil) {
+        [config.inAppMessageConfig setClipboardButtonCallback:^(NSString *processedText) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_CLIPBOARD_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_CLIPBOARD_BUTTON_PROCESSED_TEXT: processedText}];
+        }];
+    }
+
+    if ([config.embeddedMessageConfig embeddedMessageCallback] == nil) {
+        [config.embeddedMessageConfig setEmbeddedMessageCallbackWithPersonalization:^(SwrveEmbeddedMessage *message, NSDictionary *personalizationProperties) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:EMBEDDED_MESSAGE_CALLBACK_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_EMBEDDED_MESSAGE_OBJECT: message, CALLBACK_KEY_EMBEDDED_MESSAGE_PERSONALIZATION_PROPERTIES_MAP: personalizationProperties}];
+        }];
+    }
+
     if (config.pushEnabled) {
         config.pushResponseDelegate = SwrvePluginPushHandler.sharedInstance;
     }
@@ -40,40 +74,12 @@ RCT_EXPORT_MODULE()
     config.resourcesUpdatedCallback = ^() {
         [[NSNotificationCenter defaultCenter] postNotificationName:RESOURCES_UPDATED_EVENT_NAME object:self userInfo:nil];
     };
-    
+
     [SwrveSDK sharedInstanceWithAppID:appId apiKey:apiKey config:config];
 
-    // Set callbacks
-    if([[SwrveSDK messaging] dismissButtonCallback] == nil) {
-        [[SwrveSDK messaging] setDismissButtonCallback:^(NSString *campaignSubject, NSString *buttonName) {
-           [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_DISMISS_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT: campaignSubject, CALLBACK_KEY_DISMISS_BUTTON_NAME: buttonName}];
-        }];
-    }
-    
-    if([[SwrveSDK messaging] installButtonCallback] == nil) {
-        [[SwrveSDK messaging] setInstallButtonCallback:^BOOL(NSString *appStoreUrl) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_INSTALL_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_INSTALL_BUTTON_APPSTORE_URL: appStoreUrl}];
-            [SwrvePlugin handleInstall:appStoreUrl];
-            return true;
-        }];
-    }
-    
-    if([[SwrveSDK messaging] customButtonCallback] == nil) {
-        [[SwrveSDK messaging] setCustomButtonCallback:^(NSString *action) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_CUSTOM_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_CUSTOM_BUTTON_ACTION: action}];
-            [SwrvePlugin handleCustom:action];
-        }];
-    }
-    
-    if([[SwrveSDK messaging] clipboardButtonCallback] == nil) {
-        [[SwrveSDK messaging] setClipboardButtonCallback:^(NSString *processedText) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_INSTALL_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_CLIPBOARD_BUTTON_PROCESSED_TEXT: processedText}];
-        }];
-    }
-    
     //Ensure we start the state manager for this moment
     [SwrveCallbackStateManager sharedInstance];
-    
+
     [SwrvePlugin sendPluginVersion];
 }
 
@@ -85,15 +91,11 @@ RCT_EXPORT_MODULE()
     [SwrveSDK handleDeferredDeeplink:url];
 }
 
-+ (void)installAction:(NSURL *)url {
-    [SwrveSDK installAction:url];
-}
-
 + (BOOL)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo withBackgroundCompletionHandler:(void (^)(UIBackgroundFetchResult, NSDictionary *))completionHandler API_AVAILABLE(ios(7.0))
 {
     NSLog(@"SwrvePlugin - didReceiveRemoteNotification %@", userInfo);
     BOOL handled = [SwrveSDK didReceiveRemoteNotification:userInfo withBackgroundCompletionHandler:completionHandler];
-    
+
     if (handled) {
        if ([userInfo objectForKey:SwrveSilentPushPayloadKey]) {
            NSString *json = [SwrvePluginUtils serializeDictonaryToJson:userInfo withKey:SwrveSilentPushPayloadKey];
@@ -152,6 +154,12 @@ RCT_REMAP_METHOD(start,
             [SwrvePlugin sendPluginVersion];
         });
     }
+}
+
+RCT_EXPORT_METHOD(stopTracking)
+{
+    NSLog(@"SwrvePlugin - stopTracking");
+    [self.swrveInstance stopTracking];
 }
 
 RCT_REMAP_METHOD(identify,
@@ -288,7 +296,7 @@ RCT_REMAP_METHOD(getApiKey, getApiKeyWithResolver:(RCTPromiseResolveBlock)resolv
         NSString *apiKey = [self.swrveInstance apiKey];
         resolve(apiKey);
     } @catch ( NSException *ex ) {
-        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];        
+        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
 }
@@ -298,7 +306,7 @@ RCT_REMAP_METHOD(getUserId, getUserIdWithResolver:(RCTPromiseResolveBlock)resolv
         NSString *userId = [self.swrveInstance userID];
         resolve(userId);
     } @catch ( NSException *ex ) {
-        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];        
+        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
 }
@@ -350,16 +358,16 @@ RCT_REMAP_METHOD(getUserResourcesDiff, getUserResourcesDiffWithResolver:(RCTProm
 
 RCT_REMAP_METHOD(getMessageCenterCampaigns, getMessageCenterCampaignsWithPersonalization:(NSDictionary * _Nullable)personalization resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     @try {
-    
+
         NSArray<SwrveCampaign *> *campaigns;
         if (personalization != nil) {
-            campaigns = [[self.swrveInstance messaging] messageCenterCampaignsWithPersonalisation:personalization];           
+            campaigns = [self.swrveInstance messageCenterCampaignsWithPersonalization:personalization];
         } else {
-            campaigns = [[self.swrveInstance messaging] messageCenterCampaigns];
+            campaigns = [self.swrveInstance messageCenterCampaigns];
         }
 
         NSMutableArray *messageAsArray = [[NSMutableArray alloc] init];
-        
+
         for (SwrveCampaign *campaign in campaigns) {
             NSMutableDictionary *campaignDictionary = [[NSMutableDictionary alloc] init];
             [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[campaign ID]] forKey:@"ID"];
@@ -367,21 +375,21 @@ RCT_REMAP_METHOD(getMessageCenterCampaigns, getMessageCenterCampaignsWithPersona
             [campaignDictionary setValue:[campaign subject] forKey:@"subject"];
             [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[[campaign dateStart] timeIntervalSince1970]] forKey:@"dateStart"];
             [campaignDictionary setValue:@([campaign messageCenter]) forKey:@"messageCenter"];
-            
+
             NSMutableDictionary *stateDictionary = [NSMutableDictionary dictionaryWithDictionary:[[campaign state] asDictionary]];
-            
+
             // Remove unused ID
             [stateDictionary removeObjectForKey:@"ID"];
-            
+
             // convert the status to a readable format so its consistent across both platforms
             NSUInteger statusNumber = [[stateDictionary objectForKey:@"status"] integerValue];
             [stateDictionary setObject:[self translateCampaignStatus:statusNumber] forKey:@"status"];
             [campaignDictionary setObject:stateDictionary forKey:@"state"];
             [messageAsArray addObject:campaignDictionary];
         }
-        
+
         resolve(messageAsArray);
-        
+
     } @catch ( NSException *ex ) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
@@ -389,41 +397,87 @@ RCT_REMAP_METHOD(getMessageCenterCampaigns, getMessageCenterCampaignsWithPersona
 }
 
 RCT_REMAP_METHOD(showMessageCenterCampaign, showMessageCenterCampaignWithId:(NSInteger)campaignId withPersonalization:(NSDictionary * _Nullable) personalization) {
-    
+
     SwrveCampaign *canditiate = [self findMessageCenterCampaignbyID:campaignId];
     if (canditiate) {
-        [[self.swrveInstance messaging] showMessageCenterCampaign:canditiate withPersonalisation:personalization];
+        [self.swrveInstance showMessageCenterCampaign:canditiate withPersonalization:personalization];
     } else {
         NSLog(@"SwrvePlugin - Unable to find campaign of id: %ld", campaignId);
     }
 }
 
 RCT_REMAP_METHOD(removeMessageCenterCampaign, removeMessageCenterCampaignWithId:(NSInteger)campaignId) {
-    
+
     SwrveCampaign *canditiate = [self findMessageCenterCampaignbyID:campaignId];
     if (canditiate) {
-        [[self.swrveInstance messaging] removeMessageCenterCampaign:canditiate];
+        [self.swrveInstance removeMessageCenterCampaign:canditiate];
     } else {
         NSLog(@"SwrvePlugin - Unable to find campaign of id: %ld", campaignId);
     }
 }
 
 RCT_REMAP_METHOD(markMessageCenterCampaignAsSeen, markMessageCenterCampaignAsSeenWithId:(NSInteger)campaignId) {
-    
+
     SwrveCampaign *canditiate = [self findMessageCenterCampaignbyID:campaignId];
     if (canditiate) {
-        [[self.swrveInstance messaging] markMessageCenterCampaignAsSeen:canditiate];
+        [self.swrveInstance markMessageCenterCampaignAsSeen:canditiate];
     } else {
         NSLog(@"SwrvePlugin - Unable to find campaign of id: %ld", campaignId);
     }
 }
 
 RCT_REMAP_METHOD(getRealTimeUserProperties, getRealTimeUserPropertiesWithResolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
-    
+
     @try {
         [self.swrveInstance realTimeUserProperties:^(NSDictionary *properties) {
             resolve(properties);
         }];
+    } @catch ( NSException *ex ) {
+        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
+        reject(ex.name, ex.reason, error);
+    }
+}
+
+RCT_REMAP_METHOD(markEmbeddedMessageCampaignAsSeen, markEmbeddedMessageCampaignAsSeenWithId:(NSInteger)campaignId) {
+
+    SwrveEmbeddedCampaign *candidate = [self findEmbeddedCampaignByID:campaignId];
+    if (candidate) {
+        [self.swrveInstance embeddedMessageWasShownToUser:[candidate message]];
+    } else {
+        NSLog(@"SwrvePlugin - Unable to find campaign of id: %ld", campaignId);
+    }
+}
+
+RCT_REMAP_METHOD(markEmbeddedMessageButtonAsPressed, markEmbeddedMessageButtonAsPressedWithId:(NSInteger)campaignId forButton:(NSString *)buttonName) {
+
+    SwrveEmbeddedCampaign *candidate = [self findEmbeddedCampaignByID:campaignId];
+    if (candidate) {
+        [self.swrveInstance embeddedButtonWasPressed:[candidate message] buttonName:buttonName];
+    } else {
+        NSLog(@"SwrvePlugin - Unable to find campaign of id: %ld", campaignId);
+    }
+}
+
+RCT_REMAP_METHOD(getPersonalizedText, getPersonalizedTextWithText:(NSString *)text andPersonalization:(NSDictionary *)personalizationProperties resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+    @try {
+        NSString *personalizedText = [self.swrveInstance personalizeText:text withPersonalization:personalizationProperties];
+        resolve(personalizedText);
+    } @catch ( NSException *ex ) {
+        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
+        reject(ex.name, ex.reason, error);
+    }
+}
+
+RCT_REMAP_METHOD(getPersonalizedEmbeddedMessageData, getPersonalizedEmbeddedMessageDataWithId:(NSInteger)campaignId andPersonalization:(NSDictionary *)personalizationProperties resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+    @try {
+        SwrveEmbeddedCampaign *candidate = [self findEmbeddedCampaignByID:campaignId];
+        NSString *personalizedEmbeddedMessageData = [[NSString alloc] init];
+        
+        if (candidate) {
+            personalizedEmbeddedMessageData = [self.swrveInstance personalizeEmbeddedMessageData:[candidate message] withPersonalization:personalizationProperties];
+        }
+        
+        resolve(personalizedEmbeddedMessageData);
     } @catch ( NSException *ex ) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
@@ -445,22 +499,11 @@ RCT_EXPORT_METHOD(stoppedListening) {
     SwrvePluginPushHandler.sharedInstance.shouldBufferEvents = YES;
 }
 
-RCT_EXPORT_METHOD(listeningInstall) {
-    SwrveCallbackStateManager.sharedInstance.isListeningInstall = YES;
-}
-
 RCT_EXPORT_METHOD(listeningCustom) {
     SwrveCallbackStateManager.sharedInstance.isListeningCustom = YES;
 }
 
 #pragma mark - helper methods
-
-
-+ (void) handleInstall:(NSString *) nonProcessedAction {
-    if (SwrveCallbackStateManager.sharedInstance.isListeningInstall == NO) {
-        [SwrvePlugin handleAction:nonProcessedAction];
-    }
-}
 
 + (void) handleCustom:(NSString *) nonProcessedAction {
     if (SwrveCallbackStateManager.sharedInstance.isListeningCustom == NO) {
@@ -473,23 +516,31 @@ RCT_EXPORT_METHOD(listeningCustom) {
         NSURL *url = [NSURL URLWithString:nonProcessedAction];
         if (url != nil) {
             if (@available(iOS 10.0, *)) {
-                DebugLog(@"Action - %@ - handled.  Sending to application as URL", nonProcessedAction);
+#ifdef DEBUG
+                NSLog(@"Action - %@ - handled.  Sending to application as URL", nonProcessedAction);
+#endif
                 [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:^(BOOL success) {
-                    DebugLog(@"Opening url [%@] successfully: %d", url, success);
+#ifdef DEBUG
+                    NSLog(@"Opening url [%@] successfully: %d", url, success);
+#endif
                 }];
             } else {
-                DebugLog(@"Action not handled, not supported (should not reach this code)", nil);
+#ifdef DEBUG
+                NSLog(@"Action not handled, not supported (should not reach this code)", nil);
+#endif
             }
         } else {
-            DebugLog(@"Action - %@ -  not handled. Action to be processed in react layer.", nonProcessedAction);
+#ifdef DEBUG
+            NSLog(@"Action - %@ -  not handled. Action to be processed in react layer.", nonProcessedAction);
+#endif
         }
     }
 }
 
 - (SwrveCampaign *) findMessageCenterCampaignbyID:(NSInteger) campaignId {
-    NSArray<SwrveCampaign *> *campaigns = [[self.swrveInstance messaging] messageCenterCampaigns];
+    NSArray<SwrveCampaign *> *campaigns = [self.swrveInstance messageCenterCampaigns];
     SwrveCampaign *canditiate;
-    
+
     for (SwrveCampaign *campaign in campaigns) {
         if ([campaign ID] == campaignId) {
             canditiate = campaign;
@@ -497,6 +548,37 @@ RCT_EXPORT_METHOD(listeningCustom) {
     }
 
     return canditiate;
+}
+
+- (NSMutableDictionary *) getCache {
+    NSString *userId = [self.swrveInstance userID];
+    NSData *dataFile = [NSData dataWithContentsOfFile:[SwrveLocalStorage campaignsFilePathForUserId:userId]];
+    NSMutableDictionary *dictionary = [NSMutableDictionary new];
+
+    if (dataFile != nil) {
+        NSError *error;
+        dictionary = [NSJSONSerialization JSONObjectWithData:dataFile
+                                                   options:NSJSONReadingMutableContainers
+                                                     error:&error];
+        if (error) {
+            NSLog(@"SwrvePlugin - Unable to read cache error: %@", [error localizedDescription]);
+            return nil;
+        }
+    }
+    return dictionary;
+}
+
+- (SwrveEmbeddedCampaign *) findEmbeddedCampaignByID:(NSInteger) campaignId {
+    NSMutableDictionary *cache = [self getCache];
+    NSArray *campaigns = [cache objectForKey:@"campaigns"];
+    for (NSDictionary *campaign in campaigns)
+    {
+        if (campaignId == [[campaign valueForKey:@"id"] integerValue]) {
+            SwrveEmbeddedCampaign *embeddedCampaign = [[SwrveEmbeddedCampaign alloc] initAtTime:[NSDate date] fromDictionary:campaign forController:nil];
+            return embeddedCampaign;
+        }
+    }
+    return nil;
 }
 
 - (NSString *)translateCampaignStatus:(NSUInteger) status {

@@ -13,7 +13,7 @@ def safeExtGet(prop, fallback) {
 buildscript {
     repositories {
         google()
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.6.2'
@@ -36,13 +36,12 @@ android {
 
 repositories {
     mavenCentral()
-    jcenter { url = 'https://dl.bintray.com/swrve-inc/android' }
     maven { url 'https://maven.google.com' }
 }
 
 dependencies {
     implementation 'com.facebook.react:react-native:+'
-    implementation 'com.swrve.sdk.android:swrve-firebase:7.4.0'
+    implementation 'com.swrve.sdk.android:swrve-firebase:8.0.0'
     implementation 'com.google.code.gson:gson:2.8.6'
 }
 

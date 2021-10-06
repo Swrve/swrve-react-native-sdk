@@ -1,7 +1,7 @@
 {
     "name": "react-native-swrve-geo-plugin",
     "title": "React Native Swrve Geo Plugin",
-    "version": "1.2.0",
+    "version": "2.0.0",
     "description": "React Native Plugin for Swrve Geo",
     "main": "./lib/SwrveGeoSDK.js",
     "types": "./index.d.ts",
@@ -29,6 +29,6 @@
     },
     "devDependencies": {
         "react": "^16.9.0",
-        "react-native": "^0.61.5"
+        "react-native": "^0.65.1"
     }
 }

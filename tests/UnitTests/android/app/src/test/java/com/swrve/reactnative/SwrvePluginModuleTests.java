@@ -21,6 +21,7 @@ import com.swrve.sdk.SwrveUserResourcesListener;
 import com.swrve.sdk.SwrveRealTimeUserPropertiesListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveCampaignState;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveOrientation;
 
 import static com.swrve.reactnative.SwrvePluginErrorCodes.*;
@@ -55,9 +56,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -66,7 +70,7 @@ import static org.mockito.Mockito.verify;
 public class SwrvePluginModuleTests {
 
     @Mock
-    ISwrve swrve;
+    Swrve swrve;
     @Mock
     Promise promise;
     @Mock
@@ -436,4 +440,64 @@ public class SwrvePluginModuleTests {
         verify(eventEmitter).onSilentPush(any(Context.class), any(JSONObject.class));
     }
 
+    @Test
+    public void markEmbeddedMessageCampaignAsSeen() {
+        String cache = "{\"campaigns\": [{\"id\":551899,\"start_date\":1630510173000,\"end_date\":2145920400000,\"rules\":{\"delay_first_message\":180,\"dismiss_after_views\":99999,\"display_order\":\"random\",\"min_delay_between_messages\":60},\"message_center\":true,\"embedded_message\":{\"id\":547716,\"name\":\"Test Embedded Campaign\",\"data\":\"Hello this is a rendered embedded message.\",\"type\":\"other\",\"buttons\":[],\"version\":1,\"rules\":{},\"priority\":9999},\"subject\":\"\"}]}";
+        SwrvePluginModule module = getModule();
+
+        Mockito.doReturn(cache).when(swrve).getCachedData(any(), any());
+        Mockito.doReturn(new Date()).when(swrve).getInitialisedTime();
+
+        module.markEmbeddedMessageCampaignAsSeen(551899);
+        Mockito.verify(swrve).embeddedMessageWasShownToUser(any(SwrveEmbeddedMessage.class));
+    }
+
+    @Test
+    public void markEmbeddedMessageButtonAsPressed() {
+        String cache = "{\"campaigns\": [{\"id\":551899,\"start_date\":1630510173000,\"end_date\":2145920400000,\"rules\":{\"delay_first_message\":180,\"dismiss_after_views\":99999,\"display_order\":\"random\",\"min_delay_between_messages\":60},\"message_center\":true,\"embedded_message\":{\"id\":547716,\"name\":\"Test Embedded Campaign\",\"data\":\"Hello this is a rendered embedded message.\",\"type\":\"other\",\"buttons\":[],\"version\":1,\"rules\":{},\"priority\":9999},\"subject\":\"\"}]}";
+        SwrvePluginModule module = getModule();
+
+        Mockito.doReturn(cache).when(swrve).getCachedData(any(), any());
+        Mockito.doReturn(new Date()).when(swrve).getInitialisedTime();
+
+        module.markEmbeddedMessageButtonAsPressed(551899, "Button 1");
+        Mockito.verify(swrve).embeddedMessageButtonWasPressed(any(SwrveEmbeddedMessage.class), eq("Button 1"));
+    }
+
+    @Test
+    public void testGetPersonalizedText() {
+        SwrvePluginModule module = getModule();
+
+        JavaOnlyMap fbMap = new JavaOnlyMap();
+        fbMap.putString("test", "value");
+        String data = "test data";
+
+        module.getPersonalizedText(data, fbMap, promise);
+
+        verify(swrve).getPersonalizedText(eq(data), anyMap());
+    }
+
+    @Test
+    public void testGetPersonalizedEmbeddedMessageData() {
+        String cache = "{\"campaigns\": [{\"id\":551899,\"start_date\":1630510173000,\"end_date\":2145920400000,\"rules\":{\"delay_first_message\":180,\"dismiss_after_views\":99999,\"display_order\":\"random\",\"min_delay_between_messages\":60},\"message_center\":true,\"embedded_message\":{\"id\":547716,\"name\":\"Test Embedded Campaign\",\"data\":\"Hello this is a rendered embedded message.\",\"type\":\"other\",\"buttons\":[],\"version\":1,\"rules\":{},\"priority\":9999},\"subject\":\"\"}]}";
+        SwrvePluginModule module = getModule();
+
+        Mockito.doReturn(cache).when(swrve).getCachedData(any(), any());
+        Mockito.doReturn(new Date()).when(swrve).getInitialisedTime();
+
+        JavaOnlyMap fbMap = new JavaOnlyMap();
+        fbMap.putString("test", "value");
+
+        module.getPersonalizedEmbeddedMessageData(551899, fbMap, promise);
+
+        verify(swrve).getPersonalizedEmbeddedMessageData(any(SwrveEmbeddedMessage.class), anyMap());
+    }
+
+    @Test
+    public void testStopTracking() {
+        SwrvePluginModule module = getModule();
+
+        module.stopTracking();
+        verify(swrve).stopTracking();
+    }
 }

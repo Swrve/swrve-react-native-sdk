@@ -4,10 +4,10 @@ export type InitMode = 'auto' | 'managed';
 export type AndroidPushImportance = 'none' | 'min' | 'low' | 'default' | 'max';
 export type PushListener = (payload: string) => void;
 export type UserResourcesListener = () => void;
-export type MessageInstallButtonPressedListener = (appStoreUrl: string) => void;
 export type MessageCustomButtonPressedListener = (action: string) => void;
 export type MessageDismissButtonPressedListener = (campaignSubject: string, buttonName: string) => void;
 export type MessageClipboardButtonPressedListener = (processedText: string) => void;
+export type EmbeddedMessageCampaignListener = (embeddedMessage: Map, personalizationProperties?: Map) => void;
 
 export interface StringMap {
 	[key: string]: string;
@@ -23,17 +23,21 @@ export interface SwrveListeners {
 }
 
 export interface SwrveMessageListeners {
-	installButtonPressedListener?: MessageInstallButtonPressedListener;
 	customButtonPressedListener?: MessageCustomButtonPressedListener;
 	dismissButtonPressedListener?: MessageDismissButtonPressedListener;
 	clipboardButtonPressedListener?: MessageClipboardButtonPressedListener;
+}
+
+export interface SwrveEmbeddedMessageListeners {
+	embeddedMessageCampiagnListener?: EmbeddedMessageCampaignListener
 }
 
 /// Push and Resource and Campaign Listeners
 export function setListeners(
 	SwrveListeners?: SwrveListeners,
 	swrvePushListeners?: SwrvePushListeners,
-	SwrveMessageListeners?: SwrveMessageListeners
+	SwrveMessageListeners?: SwrveMessageListeners,
+	SwrveEmbeddedMessageListeners?: SwrveEmbeddedMessageListeners
 );
 
 export function start(userId: string);
@@ -115,8 +119,18 @@ export function getRealTimeUserProperties(): Promise<Map>;
 
 export function getMessageCenterCampaigns(personalization?: Map): Promise<Array<Map>>;
 
+export function getPersonalizedText(text: string, personalizationProperties: Map): Promise<string>;
+
+export function getPersonalizedEmbeddedMessageData(campaignId: number, personalizationProperties: Map): Promise<string>;
+
 export function showMessageCenterCampaign(campaignId: number, personalization?: Map);
 
 export function removeMessageCenterCampaign(campaignId: number);
 
 export function markMessageCenterCampaignAsSeen(campaignId: number);
+
+export function markEmbeddedMessageCampaignAsSeen(campaignId: number);
+
+export function markEmbeddedMessageButtonAsPressed(campaignId: number, button: String);
+
+export function stopTracking();

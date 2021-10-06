@@ -17,7 +17,6 @@
     self = [super init];
     if (self) {
         self.isListeningCustom = NO;
-        self.isListeningInstall = NO;
     }
     return self;
 }

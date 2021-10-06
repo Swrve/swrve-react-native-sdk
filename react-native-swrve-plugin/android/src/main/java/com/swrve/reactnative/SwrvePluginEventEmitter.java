@@ -14,8 +14,13 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.swrve.sdk.SwrvePushNotificationListener;
 import com.swrve.sdk.SwrveSilentPushListener;
 import com.swrve.sdk.SwrveResourcesListener;
+import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.Map;
 
 import static com.swrve.reactnative.SwrvePluginModule.LOG_TAG;
 
@@ -26,22 +31,22 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule
     private final String PUSH_EVENT_NAME = "PushNotification";
     private final String SILENT_PUSH_EVENT_NAME = "SilentPushNotification";
     private final String PUSH_EVENT_PAYLOAD = "PushEventPayload";
-    private final String CALLBACK_KEY_INSTALL_BUTTON_APPSTORE_URL = "appStoreUrl";
     private final String CALLBACK_KEY_CUSTOM_BUTTON_ACTION = "customAction";
     private final String CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT = "campaignSubject";
     private final String CALLBACK_KEY_DISMISS_BUTTON_NAME = "buttonName";
     private final String CALLBACK_KEY_CLIPBOARD_BUTTON_PROCESSED_TEXT = "clipboardContents";
+    private final String CALLBACK_KEY_EMBEDDED_MESSAGE_PERSONALIZATION_PROPERTIES_MAP = "embeddedMessagePersonalizationProperties";
+    private final String CALLBACK_KEY_EMBEDDED_MESSAGE_MAP = "embeddedMessage";
 
     private final String RESOURCES_UPDATED_EVENT_NAME = "SwrveUserResourcesUpdated";
-    private final String MESSAGE_CALLBACK_INSTALL_EVENT_NAME = "SwrveMessageInstallCallback";
     private final String MESSAGE_CALLBACK_CUSTOM_EVENT_NAME = "SwrveMessageCustomCallback";
     private final String MESSAGE_CALLBACK_DISMISS_EVENT_NAME = "SwrveMessageDismissCallback";
     private final String MESSAGE_CALLBACK_CLIPBOARD_EVENT_NAME = "SwrveMessageClipboardCallback";
     private final String MESSAGE_CALLBACK_PERSONALISATION_EVENT_NAME = "SwrveMessagePersonalisationCallback";
+    private final String EMBEDDED_MESSAGE_CALLBACK_EVENT_NAME = "SwrveEmbeddedMessageCallback";
     private final String MODULE_NAME = "SwrvePluginEventEmitter";
 
     private boolean listeningCustom = false;
-    private boolean listeningInstall = false;
 
     private final ReactApplicationContext reactContext;
 
@@ -97,24 +102,6 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule
         }
     }
 
-    public boolean onInstallAction(String appStoreLink) {
-        try {
-            WritableMap params = Arguments.createMap();
-            params.putString(CALLBACK_KEY_INSTALL_BUTTON_APPSTORE_URL, appStoreLink);
-            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                    .emit(MESSAGE_CALLBACK_INSTALL_EVENT_NAME, params);
-
-            if (this.listeningInstall == false) {
-                processAction(appStoreLink);
-            }
-
-        } catch (Exception e) {
-            Log.e(LOG_TAG, "Unable to emit install button callback notification", e);
-        }
-
-        return true;
-    }
-
     public void onCustomAction(String customAction) {
         try {
             WritableMap params = Arguments.createMap();
@@ -154,6 +141,24 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule
         }
     }
 
+    public void onEmbeddedMessageCallback(SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
+        try {
+            WritableMap params = Arguments.createMap();
+
+            JSONObject embeddedMessageJSON = embeddedMessageToJson(message);
+            params.putMap(CALLBACK_KEY_EMBEDDED_MESSAGE_MAP, SwrvePluginUtils.convertJsonToMap(embeddedMessageJSON));
+
+            if(personalizationProperties != null) {
+                WritableMap personalizationMap = SwrvePluginUtils.convertJsonToMap(new JSONObject(personalizationProperties));
+                params.putMap(CALLBACK_KEY_EMBEDDED_MESSAGE_PERSONALIZATION_PROPERTIES_MAP, personalizationMap);
+            }
+            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit(EMBEDDED_MESSAGE_CALLBACK_EVENT_NAME, params);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Unable to emit embedded message triggered event", e);
+        }
+    }
+
     public void processAction(String unprocessedAction) {
         try {
             reactContext.getCurrentActivity()
@@ -167,7 +172,22 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule
         this.listeningCustom = listeningCustom;
     }
 
-    public void setListeningInstall(boolean listeningInstall) {
-        this.listeningInstall = listeningInstall;
+    private JSONObject embeddedMessageToJson(SwrveEmbeddedMessage message) throws JSONException {
+        JSONObject embeddedMessageJSON = new JSONObject();
+
+        embeddedMessageJSON.put("campaignId", message.getCampaign().getId());
+        embeddedMessageJSON.put("messageId", message.getId());
+        embeddedMessageJSON.put("priority", message.getPriority());
+        embeddedMessageJSON.put("type", message.getType());
+        embeddedMessageJSON.put("data", message.getData());
+
+        JSONArray buttons = new JSONArray();
+
+        for(String button : message.getButtons()) {
+            buttons.put(button);
+        }
+        embeddedMessageJSON.put("buttons", buttons);
+
+        return embeddedMessageJSON;
     }
 }

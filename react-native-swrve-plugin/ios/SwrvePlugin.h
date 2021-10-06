@@ -6,7 +6,6 @@
 + (void)initWithAppID:(int)appId apiKey:(nonnull NSString *)apiKey config:(nullable SwrveConfig *)config;
 + (void)handleDeeplink:(nonnull NSURL *)url;
 + (void)handleDeferredDeeplink:(nonnull NSURL *)url;
-+ (void)installAction:(nonnull NSURL *)url;
 + (BOOL)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
     withBackgroundCompletionHandler:(void (^)(UIBackgroundFetchResult, NSDictionary *))completionHandler API_AVAILABLE(ios(7.0));
 
@@ -19,6 +18,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property(nonatomic, strong, nonnull) Swrve *swrveInstance;
 
 - (void)startWithUserId:(NSString *)userId;
+
+- (void)stopTracking;
 
 - (void)identifyWithUserIdentity:(nonnull NSString *)userIdentity
                             resolver:(RCTPromiseResolveBlock)resolve
@@ -65,21 +66,33 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)isStartedWithResolver:(RCTPromiseResolveBlock)resolve
                      rejecter:(RCTPromiseRejectBlock)reject;
 
-- (void)getUserResourcesWithResolver:(RCTPromiseResolveBlock)resolve 
+- (void)getUserResourcesWithResolver:(RCTPromiseResolveBlock)resolve
                             rejecter:(RCTPromiseRejectBlock)reject;
 
-- (void)getUserResourcesDiffWithResolver:(RCTPromiseResolveBlock)resolve 
+- (void)getUserResourcesDiffWithResolver:(RCTPromiseResolveBlock)resolve
                                 rejecter:(RCTPromiseRejectBlock)reject;
 
 - (void)getMessageCenterCampaignsWithPersonalization:(NSDictionary * _Nullable) personalization
-                                     resolver:(RCTPromiseResolveBlock)resolve 
+                                     resolver:(RCTPromiseResolveBlock)resolve
                                      rejecter:(RCTPromiseRejectBlock)reject;
+
+- (void)getPersonalizedTextWithText:(NSString *)text andPersonalization:(NSDictionary *)personalizationProperties
+                           resolver:(RCTPromiseResolveBlock)resolve
+                           rejecter:(RCTPromiseRejectBlock)reject;
+
+- (void)getPersonalizedEmbeddedMessageDataWithId:(NSInteger)campaignId andPersonalization:(NSDictionary *)personalizationProperties
+                                        resolver:(RCTPromiseResolveBlock)resolve
+                                        rejecter:(RCTPromiseRejectBlock)reject;
 
 - (void)showMessageCenterCampaignWithId:(NSInteger)campaignId withPersonalization:(NSDictionary * _Nullable) personalization;
 
 - (void)removeMessageCenterCampaignWithId:(NSInteger)campaignId;
 
 - (void)markMessageCenterCampaignAsSeenWithId:(NSInteger)campaignId;
+
+- (void)markEmbeddedMessageCampaignAsSeenWithId:(NSInteger)campaignId;
+
+- (void)markEmbeddedMessageButtonAsPressedWithId:(NSInteger)campaignId forButton:(NSString *)buttonName;
 
 - (void)refreshCampaignsAndResources;
 

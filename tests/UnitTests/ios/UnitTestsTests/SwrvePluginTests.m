@@ -5,6 +5,7 @@
 #import <SwrveSDK/SwrveSDK.h>
 #import <SwrveSDK/SwrveCampaign.h>
 #import <SwrveSDK/SwrveCampaignStatus.h>
+#import <SwrveSDK/SwrveMessageController+Private.h>
 
 #import "../../node_modules/react-native-swrve-plugin/ios/SwrvePlugin.h"
 #import "../../node_modules/react-native-swrve-plugin/ios/SwrvePluginPushHandler.h"
@@ -32,12 +33,19 @@
 
 @end
 
+@interface SwrvePlugin ()
+
+// Expose private method
+- (NSMutableDictionary *) getCache;
+
+@end
+
 @implementation SwrvePluginTests
 
 - (void) setUp {
   self.swrve = OCMClassMock([Swrve class]);
   
-  self.plugin = [SwrvePlugin new];
+  self.plugin = OCMPartialMock([SwrvePlugin new]);
   self.plugin.swrveInstance = self.swrve;
 }
 
@@ -49,6 +57,12 @@
   [self.plugin startWithUserId:@"user-id"];
   
   OCMVerify([self.swrve startWithUserId:@"user-id"]);
+}
+
+- (void) testStopTracking {
+  [self.plugin stopTracking];
+  
+  OCMVerify([self.swrve stopTracking]);
 }
 
 - (void) testStartWithoutUserId {
@@ -298,18 +312,15 @@
 }
 
 - (void) testGetMessageCenterCampaigns {
-  id swrveMessagingMock = OCMClassMock([SwrveMessageController class]);
+  // id swrveMessagingMock = OCMClassMock([SwrveMessageController class]);
   SwrveCampaign *campaignMock = OCMClassMock([SwrveCampaign class]);
   SwrveCampaignState *campaignStateMock = OCMClassMock([SwrveCampaignState class]);
-  
-  OCMExpect([self.swrve messaging]).andReturn(swrveMessagingMock);
-  
+
   // Mock Campaign State
   OCMStub([campaignStateMock campaignID]).andReturn(44);
   OCMStub([campaignStateMock status]).andReturn(SWRVE_CAMPAIGN_STATUS_UNSEEN);
   OCMStub([campaignStateMock impressions]).andReturn(0);
-  OCMStub([campaignStateMock next]).andReturn(0);
-  
+
   // Mock Campaign
   OCMStub([campaignMock ID]).andReturn(44);
   OCMStub([campaignMock subject]).andReturn(@"IAM subject");
@@ -317,18 +328,18 @@
   OCMStub([campaignMock maxImpressions]).andReturn(11111);
   OCMStub([campaignMock dateStart]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
   OCMStub([campaignStateMock status]).andReturn(campaignStateMock);
-  
+
   // Mock Campaigns List
   NSArray *mockList = [NSArray arrayWithObject:campaignMock];
-  OCMExpect([swrveMessagingMock messageCenterCampaigns]).andReturn(mockList);
-  
+  OCMExpect([self.swrve messageCenterCampaigns]).andReturn(mockList);
+
   XCTestExpectation *promiseResolved = [self expectationWithDescription:@"promiseResolved"];
-   
+
   [self.plugin getMessageCenterCampaignsWithPersonalization:nil resolver:^(id result) {
-    
+
     XCTAssertNotNil(result, @"result should not be null");
     NSArray *messageCentre = (NSArray *)result;
-  
+
     NSDictionary *firstCampaign = [messageCentre firstObject];
     XCTAssertNotNil(firstCampaign, @"Campaign from Message Center should not be null");
     XCTAssertEqualObjects([firstCampaign objectForKey:@"subject"], @"IAM subject");
@@ -336,18 +347,18 @@
     XCTAssertTrue([firstCampaign objectForKey:@"messageCenter"], @"messageCenter should be true");
     XCTAssertEqual([[firstCampaign objectForKey:@"maxImpressions"] integerValue], 11111);
     XCTAssertEqual([[firstCampaign objectForKey:@"dateStart"] integerValue], 1362671700);
-    
+
     NSDictionary *firstCampaignState = [firstCampaign objectForKey:@"state"];
     XCTAssertEqual([[firstCampaignState objectForKey:@"next"] integerValue], 0);
     XCTAssertEqualObjects([firstCampaignState objectForKey:@"status"], @"Unseen");
     XCTAssertEqual([[firstCampaignState objectForKey:@"impressions"] integerValue], 0);
-    
+
     [promiseResolved fulfill];
-    
+
   } rejecter:^(NSString *code, NSString *message, NSError *error) {
     XCTFail(@"Rejected: this should not be rejected");
   }];
-  
+
   // waiting for resolver to complete
   [self waitForExpectationsWithTimeout:15 handler:^(NSError *error) {
       if (error) {
@@ -355,59 +366,48 @@
       }
   }];
   
-  [swrveMessagingMock verify];
-  [swrveMessagingMock stopMocking];
+  OCMVerify([self.swrve messageCenterCampaigns]);
 }
 
 - (void) testShowMessageCenterCampaign {
-  id swrveMessagingMock = OCMClassMock([SwrveMessageController class]);
+  // Mock campaign response since we search by number
   SwrveCampaign *campaignMock = OCMClassMock([SwrveCampaign class]);
   OCMStub([campaignMock ID]).andReturn(88);
-  
+
   NSArray *mockList = [NSArray arrayWithObject:campaignMock];
-  OCMExpect([swrveMessagingMock messageCenterCampaigns]).andReturn(mockList);
-  OCMExpect([(SwrveMessageController*) swrveMessagingMock showMessageCenterCampaign:campaignMock withPersonalisation:nil]).andDo(nil);
-  
-  OCMStub([self.swrve messaging]).andReturn(swrveMessagingMock);
+  OCMExpect([self.swrve messageCenterCampaigns]).andReturn(mockList);
   
   [self.plugin showMessageCenterCampaignWithId:88 withPersonalization:nil];
-  
-  [swrveMessagingMock verify];
-  [swrveMessagingMock stopMocking];
+  OCMVerify([self.swrve messageCenterCampaigns]);
+  OCMVerify([self.swrve showMessageCenterCampaign:campaignMock withPersonalization:nil]);
+
 }
 
 - (void) testRemoveMessageCenterCampaign {
-  id swrveMessagingMock = OCMClassMock([SwrveMessageController class]);
+  // Mock campaign response since we search by number
   SwrveCampaign *campaignMock = OCMClassMock([SwrveCampaign class]);
   OCMStub([campaignMock ID]).andReturn(44);
-  
+
   NSArray *mockList = [NSArray arrayWithObject:campaignMock];
-  OCMExpect([swrveMessagingMock messageCenterCampaigns]).andReturn(mockList);
-  OCMExpect([(SwrveMessageController*) swrveMessagingMock removeMessageCenterCampaign:campaignMock]).andDo(nil);
-  
-  OCMStub([self.swrve messaging]).andReturn(swrveMessagingMock);
-  
+  OCMExpect([self.swrve messageCenterCampaigns]).andReturn(mockList);
+
   [self.plugin removeMessageCenterCampaignWithId:44];
   
-  [swrveMessagingMock verify];
-  [swrveMessagingMock stopMocking];
+  OCMVerify([self.swrve messageCenterCampaigns]);
+  OCMVerify([self.swrve removeMessageCenterCampaign:campaignMock]);
 }
 
 - (void) testMarkMessageCenterCampaignAsSeen {
-  id swrveMessagingMock = OCMClassMock([SwrveMessageController class]);
   SwrveCampaign *campaignMock = OCMClassMock([SwrveCampaign class]);
   OCMStub([campaignMock ID]).andReturn(55);
-  
+
   NSArray *mockList = [NSArray arrayWithObject:campaignMock];
-  OCMExpect([swrveMessagingMock messageCenterCampaigns]).andReturn(mockList);
-  OCMExpect([(SwrveMessageController*) swrveMessagingMock markMessageCenterCampaignAsSeen:campaignMock]).andDo(nil);
-  
-  OCMStub([self.swrve messaging]).andReturn(swrveMessagingMock);
+  OCMExpect([self.swrve messageCenterCampaigns]).andReturn(mockList);
   
   [self.plugin markMessageCenterCampaignAsSeenWithId:55];
   
-  [swrveMessagingMock verify];
-  [swrveMessagingMock stopMocking];
+  OCMVerify([self.swrve messageCenterCampaigns]);
+  OCMVerify([self.swrve markMessageCenterCampaignAsSeen:campaignMock]);
 }
 
 - (void) testPushBufferingWontSendYet {
@@ -441,4 +441,116 @@
   OCMVerifyAll(observerMock);
 }
 
+- (void) testEmbeddedMessageWasShownToUser {
+  NSDictionary *cache = @{
+    @"campaigns": @[
+        @{
+          @"id": @55,
+          @"start_date": @1630510173000,
+          @"end_date": @2145920400000,
+          @"rules": @{
+              @"delay_first_message": @180,
+              @"dismiss_after_views": @99999,
+              @"display_order": @"random",
+              @"min_delay_between_messages": @60
+          },
+          @"message_center": @true,
+          @"embedded_message": @{
+              @"id": @5,
+              @"name": @"Test message",
+              @"data": @"Hello test message",
+              @"type": @"other",
+              @"rules": @{},
+              @"priority": @9999,
+              @"subject": @""
+          }
+        }
+    ]
+  };
+  OCMStub([self.plugin getCache]).andReturn([cache mutableCopy]);
+  
+  [self.plugin markEmbeddedMessageCampaignAsSeenWithId:55];
+  
+  OCMVerify([self.swrve embeddedMessageWasShownToUser:[OCMArg isKindOfClass:[SwrveEmbeddedMessage class]]]);
+}
+
+- (void) testMarkEmbeddedMessageButtonAsPressed {
+  NSDictionary *cache = @{
+    @"campaigns": @[
+        @{
+          @"id": @55,
+          @"start_date": @1630510173000,
+          @"end_date": @2145920400000,
+          @"rules": @{
+              @"delay_first_message": @180,
+              @"dismiss_after_views": @99999,
+              @"display_order": @"random",
+              @"min_delay_between_messages": @60
+          },
+          @"message_center": @true,
+          @"embedded_message": @{
+              @"id": @5,
+              @"name": @"Test message",
+              @"data": @"Hello test message",
+              @"type": @"other",
+              @"rules": @{},
+              @"priority": @9999,
+              @"subject": @""
+          }
+        }
+    ]
+  };
+  OCMStub([self.plugin getCache]).andReturn([cache mutableCopy]);
+  
+  [self.plugin markEmbeddedMessageButtonAsPressedWithId:55 forButton:@"Button one"];
+  
+  OCMVerify([self.swrve embeddedButtonWasPressed:[OCMArg isKindOfClass:[SwrveEmbeddedMessage class]] buttonName:[OCMArg isEqual:(@"Button one")]]);
+}
+
+- (void) testGetPersonalizedText {
+  [self.plugin getPersonalizedTextWithText:@"test string" andPersonalization:@{@"key": @"value"} resolver:^(id result) {
+    // doesn't have to do anything we are verifying it was called.
+  } rejecter:^(NSString *code, NSString *message, NSError *error) {
+    
+  }];
+
+  OCMVerify([self.swrve personalizeText:[OCMArg any] withPersonalization:[OCMArg any]]);
+}
+
+- (void) testGetPersonalizedEmbeddedMessageData {
+  NSDictionary *cache = @{
+    @"campaigns": @[
+        @{
+          @"id": @55,
+          @"start_date": @1630510173000,
+          @"end_date": @2145920400000,
+          @"rules": @{
+              @"delay_first_message": @180,
+              @"dismiss_after_views": @99999,
+              @"display_order": @"random",
+              @"min_delay_between_messages": @60
+          },
+          @"message_center": @true,
+          @"embedded_message": @{
+              @"id": @5,
+              @"name": @"Test message",
+              @"data": @"Hello test message",
+              @"type": @"other",
+              @"rules": @{},
+              @"priority": @9999,
+              @"subject": @""
+          }
+        }
+    ]
+  };
+  OCMStub([self.plugin getCache]).andReturn([cache mutableCopy]);
+  
+  [self.plugin getPersonalizedEmbeddedMessageDataWithId:55 andPersonalization:@{@"key": @"value"} resolver:^(id result) {
+    // doesn't have to do anything we are verifying it was called.
+  } rejecter:^(NSString *code, NSString *message, NSError *error) {
+    
+  }];
+
+  OCMVerify([self.swrve personalizeEmbeddedMessageData:[OCMArg any] withPersonalization:[OCMArg any]]);
+}
 @end
