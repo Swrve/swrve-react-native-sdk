@@ -120,6 +120,11 @@ def jscFlavor = 'org.webkit:android-jsc:+'
  */
 def enableHermes = project.ext.react.get("enableHermes", false);
 
+/**
+ * Architectures to build native code for in debug.
+ */
+def nativeArchitectures = project.getProperties().get("reactNativeDebugArchitectures")
+
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
@@ -154,6 +159,11 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            if (nativeArchitectures) {
+                ndk {
+                    abiFilters nativeArchitectures.split(',')
+                }
+            }
         }
         release {
             // Caution! In production, you need to generate your own keystore file.
@@ -226,8 +236,8 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:3.0.0'
     testImplementation 'com.google.truth:truth:1.0.1'
     testImplementation 'org.json:json:20201115'
-    implementation 'com.swrve.sdk.android:swrve-firebase:8.0.0'
-    implementation 'com.swrve.sdk.android:swrve-geo:6.0.0'
+    implementation 'com.swrve.sdk.android:swrve-firebase:9.1.0'
+    implementation 'com.swrve.sdk.android:swrve-geo:7.0.0'
 
     if (enableHermes) {
         def hermesPath = "../../node_modules/hermes-engine/android/";

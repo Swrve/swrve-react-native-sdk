@@ -1,7 +1,7 @@
 {
     "name": "react-native-swrve-plugin",
     "title": "React Native Swrve Plugin",
-    "version": "2.0.0",
+    "version": "3.0.0",
     "description": "React Native Plugin for Swrve",
     "main": "./lib/SwrveSDK.js",
     "types": "./index.d.ts",
@@ -29,6 +29,6 @@
     },
     "devDependencies": {
         "react": "^16.9.0",
-        "react-native": "^0.65.1"
+        "react-native": "^0.66.4"
     }
 }
