@@ -21,7 +21,6 @@ buildscript {
 
 allprojects {
     repositories {
-        mavenLocal()
         maven {
             // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
             url("$rootDir/../node_modules/react-native/android")
@@ -32,9 +31,14 @@ allprojects {
         }
 
         // TODO: remove these when dependency repo is worked out for react-native-plugin
-        mavenCentral()
         maven { url 'https://maven.google.com' }
-
+        mavenCentral {
+            // We don't want to fetch react-native from Maven Central as there are
+            // older versions over there.
+            content {
+                excludeGroup "com.facebook.react"
+            }
+        }
         google()
         maven { url 'https://www.jitpack.io' }
     }
