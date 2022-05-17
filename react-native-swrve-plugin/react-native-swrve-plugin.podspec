@@ -18,6 +18,5 @@ Pod::Spec.new do |s|
   s.requires_arc = true
 
   s.dependency "React-Core"
-  s.dependency "SwrveSDK", "7.4.0"
+  s.dependency "SwrveSDK", "~> 7.0"
 end
-

@@ -19,5 +19,5 @@ Pod::Spec.new do |s|
 
   s.dependency "React-Core"
   s.dependency "SwrveGeoSDK", "5.0.1"
-  s.dependency "SwrveSDKCommon", "7.4.0"
+  s.dependency "SwrveSDKCommon", "~> 7.0"
 end
