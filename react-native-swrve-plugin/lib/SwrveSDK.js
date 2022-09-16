@@ -6,8 +6,10 @@ class SwrveSDK {
     static SILENT_PUSH_EVENT_NAME = 'SilentPushNotification';
     static PUSH_EVENT_PAYLOAD = 'PushEventPayload';
     static CALLBACK_KEY_CUSTOM_BUTTON_ACTION = 'customAction';
+    static CALLBACK_KEY_CUSTOM_BUTTON_ACTION_CAMPAIGN_NAME = "campaignName";
     static CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT = 'campaignSubject';
     static CALLBACK_KEY_DISMISS_BUTTON_NAME = 'buttonName';
+    static CALLBACK_KEY_DISMISS_CAMPAIGN_NAME = "campaignName";
     static CALLBACK_KEY_CLIPBOARD_BUTTON_PROCESSED_TEXT = 'clipboardContents';
     static CALLBACK_KEY_EMBEDDED_MESSAGE_PERSONALIZATION_PROPERTIES_MAP = "embeddedMessagePersonalizationProperties";
     static CALLBACK_KEY_EMBEDDED_MESSAGE_MAP = "embeddedMessage";
@@ -113,7 +115,10 @@ class SwrveSDK {
                     (event) => {
                         if (this._messageCustomButtonListener) {
                             console.log('SwrveSDK - customButtonListener');
-                            this._messageCustomButtonListener(event[SwrveSDK.CALLBACK_KEY_CUSTOM_BUTTON_ACTION]);
+                            this._messageCustomButtonListener(
+                                event[SwrveSDK.CALLBACK_KEY_CUSTOM_BUTTON_ACTION],
+                                event[SwrveSDK.CALLBACK_KEY_CUSTOM_BUTTON_ACTION_CAMPAIGN_NAME]
+                            );
                         }
                     }
                 );
@@ -129,7 +134,8 @@ class SwrveSDK {
                             console.log('SwrveSDK - dismissButtonListener');
                             this._messageDismissButtonListener(
                                 event[SwrveSDK.CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT],
-                                event[SwrveSDK.CALLBACK_KEY_DISMISS_BUTTON_NAME]
+                                event[SwrveSDK.CALLBACK_KEY_DISMISS_BUTTON_NAME],
+                                event[SwrveSDK.CALLBACK_KEY_DISMISS_CAMPAIGN_NAME]
                             );
                         }
                     }
@@ -262,6 +268,10 @@ class SwrveSDK {
 
     async getMessageCenterCampaigns(personalization) {
         return SwrvePlugin.getMessageCenterCampaigns(personalization);
+    }
+
+    async getMessageCenterCampaign(campaignId, personalization) {
+        return SwrvePlugin.getMessageCenterCampaign(campaignId, personalization);
     }
 
     async getPersonalizedText(text, personalizationProperties) {

@@ -23,6 +23,7 @@ import com.swrve.sdk.ISwrveBase;
 import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.Swrve;
 import com.swrve.sdk.SwrveCampaignDisplayer;
+import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveIAPRewards;
 import com.swrve.sdk.SwrveIdentityResponse;
 import com.swrve.sdk.SwrvePushNotificationListener;
@@ -35,8 +36,6 @@ import com.swrve.sdk.SwrveRealTimeUserPropertiesListener;
 import com.swrve.sdk.config.SwrveConfig;
 import com.swrve.sdk.config.SwrveEmbeddedMessageConfig;
 import com.swrve.sdk.config.SwrveInAppMessageConfig;
-import com.swrve.sdk.localstorage.LocalStorage;
-import com.swrve.sdk.localstorage.SQLiteLocalStorage;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
@@ -49,10 +48,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -68,7 +67,7 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     final static String LOG_TAG = "SwrvePluginModule";
     static SwrveListenerDelegateHolder delegateHolder = new SwrveListenerDelegateHolder();
 
-    public static String SWRVE_PLUGIN_VERSION = "3.2.0";
+    public static String SWRVE_PLUGIN_VERSION = "4.0.0";
     private final String MODULE_NAME = "SwrvePlugin";
     private final ReactApplicationContext reactContext;
 
@@ -432,21 +431,29 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
                 campaigns = getSwrveInstance().getMessageCenterCampaigns();
             }
             JSONArray result = new JSONArray();
-
             for (SwrveBaseCampaign campaign : campaigns) {
-                JSONObject campaignJSON = new JSONObject();
-                campaignJSON.put("ID", campaign.getId());
-                campaignJSON.put("maxImpressions", campaign.getMaxImpressions());
-                campaignJSON.put("subject", campaign.getSubject());
-                campaignJSON.put("dateStart", (campaign.getStartDate().getTime() / 1000));
-                campaignJSON.put("messageCenter", campaign.isMessageCenter());
-                campaignJSON.put("state", campaign.getSaveableState().toJSON());
+                JSONObject campaignJSON = mapSwrveBaseCampaignToMessageCenterJSON(campaign);
                 result.put(campaignJSON);
             }
+            WritableArray messageCenterCampaigns = SwrvePluginUtils.convertJsonToArray(result);
+            promise.resolve(messageCenterCampaigns);
 
-            WritableArray messsageCenterCampaigns = SwrvePluginUtils.convertJsonToArray(result);
-            promise.resolve(messsageCenterCampaigns);
+        } catch (Exception runtime) {
+            promise.reject(EXCEPTION, runtime.toString());
+        }
+    }
 
+    @ReactMethod
+    public void getMessageCenterCampaign(int campaignId, final ReadableMap personalization, final Promise promise) {
+        SwrveBaseCampaign campaign = getSwrveInstance().getMessageCenterCampaign(campaignId, SwrvePluginUtils.convertToStringMap(personalization));
+        try {
+            if (campaign != null) {
+                JSONObject campaignJSON = mapSwrveBaseCampaignToMessageCenterJSON(campaign);
+                WritableMap messageCenterCampaign = SwrvePluginUtils.convertJsonToMap(campaignJSON);
+                promise.resolve(messageCenterCampaign);
+            } else {
+                promise.reject(EXCEPTION, "Unable to find campaign");
+            }
         } catch (Exception runtime) {
             promise.reject(EXCEPTION, runtime.toString());
         }
@@ -456,14 +463,12 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     public void showMessageCenterCampaign(int campaignId, ReadableMap personalization) {
         SwrveBaseCampaign candidateCampaign = findMessageCenterCampaignbyID(campaignId);
         if (candidateCampaign != null) {
-
             if (personalization != null) {
                 getSwrveInstance().showMessageCenterCampaign(candidateCampaign,
                         SwrvePluginUtils.convertToStringMap(personalization));
             } else {
                 getSwrveInstance().showMessageCenterCampaign(candidateCampaign);
             }
-
         } else {
             Log.e(LOG_TAG, "Unable to find campaign of id: " + campaignId);
         }
@@ -593,6 +598,56 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     }
 
     // Private Methods
+    private JSONObject mapSwrveBaseCampaignToMessageCenterJSON(SwrveBaseCampaign campaign) throws JSONException {
+        JSONObject campaignJSON = new JSONObject();
+        campaignJSON.put("ID", campaign.getId());
+        campaignJSON.put("subject", campaign.getSubject());
+        campaignJSON.put("name", campaign.getName());
+        campaignJSON.put("maxImpressions", campaign.getMaxImpressions());
+        campaignJSON.put("priority", (campaign.getPriority()));
+        campaignJSON.put("downloadDate", (campaign.getDownloadDate().getTime() / 1000));
+        campaignJSON.put("dateStart", (campaign.getStartDate().getTime() / 1000));
+        campaignJSON.put("dateEnd", (campaign.getEndDate().getTime() / 1000));
+        campaignJSON.put("messageCenter", campaign.isMessageCenter());
+        campaignJSON.put("state", campaign.getSaveableState().toJSON());
+
+        if (campaign.getMessageCenterDetails() != null) {
+            JSONObject messageCentreJSON = new JSONObject();
+            String subject = campaign.getMessageCenterDetails().getSubject();
+            String description = campaign.getMessageCenterDetails().getDescription();
+            String imageAccessibilityText = campaign.getMessageCenterDetails().getImageAccessibilityText();
+            String imageSha = campaign.getMessageCenterDetails().getImageSha();
+            String imageUrl = campaign.getMessageCenterDetails().getImageURL();
+            String imagePath = null;
+
+            if (subject != null) { messageCentreJSON.put("subject", subject); }
+            if (description != null) { messageCentreJSON.put("description", description); }
+            if (imageAccessibilityText != null) { messageCentreJSON.put("imageAccessibilityText", imageAccessibilityText); }
+
+            if (imageUrl != null) {
+                messageCentreJSON.put("imageURL", imageUrl);
+
+                String imageURLSha = SwrveHelper.sha1(imageUrl.getBytes());
+                File imageFile = getFilePathForAsset(imageURLSha);
+
+                if (imageFile != null) { imagePath = imageFile.getAbsolutePath(); }
+            }
+
+            if (imageSha != null) {
+                messageCentreJSON.put("imageSha", imageSha);
+
+                if (imagePath == null) {
+                    File imageFile = getFilePathForAsset(imageSha);
+                    if (imageFile != null) { imagePath = imageFile.getAbsolutePath(); }
+                }
+            }
+
+            if (imagePath != null) { messageCentreJSON.put("image", "file://" + imagePath); }
+            campaignJSON.put("messageCenterDetails", messageCentreJSON);
+        }
+        return campaignJSON;
+    }
+
     private SwrveBaseCampaign findMessageCenterCampaignbyID(int identifier) {
         List<SwrveBaseCampaign> campaigns = getSwrveInstance().getMessageCenterCampaigns();
         SwrveBaseCampaign canditateCampaign = null;
@@ -610,6 +665,16 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
         Swrve swrve = (Swrve) getSwrveInstance();
         String cache = swrve.getCachedData(swrve.getUserId(), swrve.CACHE_CAMPAIGNS);
         return cache;
+    }
+
+    private File getFilePathForAsset(String imageSha) {
+        Swrve swrve = (Swrve) getSwrveInstance();
+        File asset = null;
+
+        File file = new File(swrve.getCacheDir() + "/" + imageSha);
+        if (file.exists()) { asset = file; }
+
+        return asset;
     }
 
     private SwrveEmbeddedCampaign findEmbeddedCampaignByID(int identifier) {
@@ -650,7 +715,7 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
             // All styling settings get retained
             inAppConfigBuilder.hideToolbar(passedInAppConfig.isHideToolbar());
             inAppConfigBuilder.clickColor(passedInAppConfig.getClickColor());
-            inAppConfigBuilder.focusColor(passedInAppConfig.getFocusColor());
+            inAppConfigBuilder.messageFocusListener(passedInAppConfig.getMessageFocusListener());
             inAppConfigBuilder.defaultBackgroundColor(passedInAppConfig.getDefaultBackgroundColor());
             inAppConfigBuilder.personalizedTextTypeface(passedInAppConfig.getPersonalizedTextTypeface());
             inAppConfigBuilder.personalizedTextBackgroundColor(passedInAppConfig.getPersonalizedTextBackgroundColor());
@@ -662,8 +727,8 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
             inAppConfigBuilder.customButtonListener(new SwrveCustomButtonListener() {
 
                 @Override
-                public void onAction(String customAction) {
-                    delegateHolder.delegate.onCustomAction(customAction);
+                public void onAction(String customAction, String campaignName) {
+                    delegateHolder.delegate.onCustomAction(customAction, campaignName);
                 }
             });
         } else {
@@ -674,8 +739,8 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
         if (passedInAppConfig.getDismissButtonListener() == null) {
             inAppConfigBuilder.dismissButtonListener(new SwrveDismissButtonListener() {
                 @Override
-                public void onAction(String campaignSubject, String buttonName) {
-                    delegateHolder.delegate.onDismissAction(campaignSubject, buttonName);
+                public void onAction(String campaignSubject, String buttonName, String campaignName) {
+                    delegateHolder.delegate.onDismissAction(campaignSubject, buttonName, campaignName);
                 }
             });
         } else {

@@ -374,6 +374,13 @@ public class SwrvePluginModuleTests {
     }
 
     @Test
+    public void testMessageCenterCampaign() throws ParseException {
+        SwrvePluginModule module = getModule();
+        module.getMessageCenterCampaign(1030, null, promise);
+        Mockito.verify(swrve, Mockito.atLeastOnce()).getMessageCenterCampaign(1030, null);
+    }
+
+    @Test
     public void testShowMessageCenterCampaign() {
         SwrvePluginModule module = getModule();
         // Mock an all the campaign that we use in our Plugin layer.
@@ -445,6 +452,7 @@ public class SwrvePluginModuleTests {
         String cache = "{\"campaigns\": [{\"id\":551899,\"start_date\":1630510173000,\"end_date\":2145920400000,\"rules\":{\"delay_first_message\":180,\"dismiss_after_views\":99999,\"display_order\":\"random\",\"min_delay_between_messages\":60},\"message_center\":true,\"embedded_message\":{\"id\":547716,\"name\":\"Test Embedded Campaign\",\"data\":\"Hello this is a rendered embedded message.\",\"type\":\"other\",\"buttons\":[],\"version\":1,\"rules\":{},\"priority\":9999},\"subject\":\"\"}]}";
         SwrvePluginModule module = getModule();
 
+        Mockito.doReturn(new Date()).when(swrve).getNow();
         Mockito.doReturn(cache).when(swrve).getCachedData(any(), any());
         Mockito.doReturn(new Date()).when(swrve).getInitialisedTime();
 
@@ -457,6 +465,7 @@ public class SwrvePluginModuleTests {
         String cache = "{\"campaigns\": [{\"id\":551899,\"start_date\":1630510173000,\"end_date\":2145920400000,\"rules\":{\"delay_first_message\":180,\"dismiss_after_views\":99999,\"display_order\":\"random\",\"min_delay_between_messages\":60},\"message_center\":true,\"embedded_message\":{\"id\":547716,\"name\":\"Test Embedded Campaign\",\"data\":\"Hello this is a rendered embedded message.\",\"type\":\"other\",\"buttons\":[],\"version\":1,\"rules\":{},\"priority\":9999},\"subject\":\"\"}]}";
         SwrvePluginModule module = getModule();
 
+        Mockito.doReturn(new Date()).when(swrve).getNow();
         Mockito.doReturn(cache).when(swrve).getCachedData(any(), any());
         Mockito.doReturn(new Date()).when(swrve).getInitialisedTime();
 
@@ -482,6 +491,7 @@ public class SwrvePluginModuleTests {
         String cache = "{\"campaigns\": [{\"id\":551899,\"start_date\":1630510173000,\"end_date\":2145920400000,\"rules\":{\"delay_first_message\":180,\"dismiss_after_views\":99999,\"display_order\":\"random\",\"min_delay_between_messages\":60},\"message_center\":true,\"embedded_message\":{\"id\":547716,\"name\":\"Test Embedded Campaign\",\"data\":\"Hello this is a rendered embedded message.\",\"type\":\"other\",\"buttons\":[],\"version\":1,\"rules\":{},\"priority\":9999},\"subject\":\"\"}]}";
         SwrvePluginModule module = getModule();
 
+        Mockito.doReturn(new Date()).when(swrve).getNow();
         Mockito.doReturn(cache).when(swrve).getCachedData(any(), any());
         Mockito.doReturn(new Date()).when(swrve).getInitialisedTime();
 

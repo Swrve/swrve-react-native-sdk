@@ -5,7 +5,9 @@
 #import <SwrveSDK/SwrveSDK.h>
 #import <SwrveSDK/SwrveCampaign.h>
 #import <SwrveSDK/SwrveCampaignStatus.h>
+#import <SwrveSDK/SwrveMessageCenterDetails.h>
 #import <SwrveSDK/SwrveMessageController+Private.h>
+#import <SwrveSDKCommon/SwrveUtils.h>
 
 #import "../../node_modules/react-native-swrve-plugin/ios/SwrvePlugin.h"
 #import "../../node_modules/react-native-swrve-plugin/ios/SwrvePluginPushHandler.h"
@@ -290,7 +292,7 @@
     
   }];
 
-  OCMVerify([self.swrve userResourcesDiff:[OCMArg any]]);
+  OCMVerify([self.swrve userResourcesDiffWithListener:[OCMArg any]]);
 }
 
 - (void) testGetRealTimeUserProperties {
@@ -312,21 +314,33 @@
 }
 
 - (void) testGetMessageCenterCampaigns {
-  // id swrveMessagingMock = OCMClassMock([SwrveMessageController class]);
   SwrveCampaign *campaignMock = OCMClassMock([SwrveCampaign class]);
   SwrveCampaignState *campaignStateMock = OCMClassMock([SwrveCampaignState class]);
+  SwrveMessageCenterDetails *messageCenterDetailsMock = OCMClassMock([SwrveMessageCenterDetails class]);
 
   // Mock Campaign State
   OCMStub([campaignStateMock campaignID]).andReturn(44);
   OCMStub([campaignStateMock status]).andReturn(SWRVE_CAMPAIGN_STATUS_UNSEEN);
   OCMStub([campaignStateMock impressions]).andReturn(0);
+  
+  // Mock Campaign Message Center Details
+  OCMStub([messageCenterDetailsMock subject]).andReturn(@"IAM message center subject");
+//  OCMStub([messageCenterDetailsMock description]).andReturn(@"IAM message center description");
+  OCMStub([messageCenterDetailsMock imageAccessibilityText]).andReturn(@"IAM message center image accesibility text");
+  OCMStub([messageCenterDetailsMock imageUrl]).andReturn(@"https://faker.image.com/");
+  OCMStub([messageCenterDetailsMock imageSha]).andReturn(@"0590479d0050002e99f411f72d0d635351134a12");
 
   // Mock Campaign
   OCMStub([campaignMock ID]).andReturn(44);
   OCMStub([campaignMock subject]).andReturn(@"IAM subject");
+  OCMStub([campaignMock name]).andReturn(@"IAM name");
   OCMStub([campaignMock messageCenter]).andReturn(true);
   OCMStub([campaignMock maxImpressions]).andReturn(11111);
+  OCMStub([campaignMock priority]).andReturn([NSNumber numberWithInt:(9999)]);
+  OCMStub([campaignMock downloadDate]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
   OCMStub([campaignMock dateStart]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
+  OCMStub([campaignMock dateEnd]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
+  OCMStub([campaignMock messageCenterDetails]).andReturn(messageCenterDetailsMock);
   OCMStub([campaignStateMock status]).andReturn(campaignStateMock);
 
   // Mock Campaigns List
@@ -342,16 +356,27 @@
 
     NSDictionary *firstCampaign = [messageCentre firstObject];
     XCTAssertNotNil(firstCampaign, @"Campaign from Message Center should not be null");
+    XCTAssertEqualObjects([firstCampaign objectForKey:@"name"], @"IAM name");
     XCTAssertEqualObjects([firstCampaign objectForKey:@"subject"], @"IAM subject");
     XCTAssertEqual([[firstCampaign objectForKey:@"ID"] integerValue], 44);
     XCTAssertTrue([firstCampaign objectForKey:@"messageCenter"], @"messageCenter should be true");
+    XCTAssertEqual([[firstCampaign objectForKey:@"priority"] integerValue], 9999);
     XCTAssertEqual([[firstCampaign objectForKey:@"maxImpressions"] integerValue], 11111);
+    XCTAssertEqual([[firstCampaign objectForKey:@"downloadDate"] integerValue], 1362671700);
     XCTAssertEqual([[firstCampaign objectForKey:@"dateStart"] integerValue], 1362671700);
+    XCTAssertEqual([[firstCampaign objectForKey:@"dateEnd"] integerValue], 1362671700);
 
     NSDictionary *firstCampaignState = [firstCampaign objectForKey:@"state"];
     XCTAssertEqual([[firstCampaignState objectForKey:@"next"] integerValue], 0);
     XCTAssertEqualObjects([firstCampaignState objectForKey:@"status"], @"Unseen");
     XCTAssertEqual([[firstCampaignState objectForKey:@"impressions"] integerValue], 0);
+    
+    NSDictionary *firstCampaignMessageCenterDetails = [firstCampaign objectForKey:@"messageCenterDetails"];
+    XCTAssertEqualObjects([firstCampaignMessageCenterDetails objectForKey:@"subject"], @"IAM message center subject");
+//    XCTAssertEqualObjects([firstCampaignMessageCenterDetails objectForKey:@"description"], @"IAM message center description");
+    XCTAssertEqualObjects([firstCampaignMessageCenterDetails objectForKey:@"imageAccessibilityText"], @"IAM message center image accesibility text");
+    XCTAssertEqualObjects([firstCampaignMessageCenterDetails objectForKey:@"imageURL"], @"https://faker.image.com/");
+    XCTAssertEqualObjects([firstCampaignMessageCenterDetails objectForKey:@"imageSha"], @"0590479d0050002e99f411f72d0d635351134a12");
 
     [promiseResolved fulfill];
 
@@ -368,6 +393,149 @@
   
   OCMVerify([self.swrve messageCenterCampaigns]);
 }
+
+- (void) testGetMessageCenterCampaign {
+  SwrveCampaign *campaignMock = OCMClassMock([SwrveCampaign class]);
+  SwrveCampaignState *campaignStateMock = OCMClassMock([SwrveCampaignState class]);
+  SwrveMessageCenterDetails *messageCenterDetailsMock = OCMClassMock([SwrveMessageCenterDetails class]);
+
+  // Mock Campaign State
+  OCMStub([campaignStateMock campaignID]).andReturn(44);
+  OCMStub([campaignStateMock status]).andReturn(SWRVE_CAMPAIGN_STATUS_UNSEEN);
+  OCMStub([campaignStateMock impressions]).andReturn(0);
+  
+  // Mock Campaign Message Center Details
+  OCMStub([messageCenterDetailsMock subject]).andReturn(@"IAM message center subject");
+//  OCMStub([messageCenterDetailsMock description]).andReturn(@"IAM message center description");
+  OCMStub([messageCenterDetailsMock imageAccessibilityText]).andReturn(@"IAM message center image accesibility text");
+  NSString *imageURL = @"https://faker.image.com/dummyimage.png";
+  OCMStub([messageCenterDetailsMock imageUrl]).andReturn(imageURL);
+  NSData *imageURLData = [imageURL dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
+  NSString *imageURLSha = [SwrveUtils sha1:imageURLData];
+  [SwrvePluginTests createDummyAsset:imageURLSha];
+  OCMStub([messageCenterDetailsMock imageSha]).andReturn(@"0590479d0050002e99f411f72d0d635351134a12");
+
+  // Mock Campaign
+  OCMStub([campaignMock ID]).andReturn(44);
+  OCMStub([campaignMock subject]).andReturn(@"IAM subject");
+  OCMStub([campaignMock name]).andReturn(@"IAM name");
+  OCMStub([campaignMock messageCenter]).andReturn(true);
+  OCMStub([campaignMock maxImpressions]).andReturn(11111);
+  OCMStub([campaignMock priority]).andReturn([NSNumber numberWithInt:(9999)]);
+  OCMStub([campaignMock downloadDate]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
+  OCMStub([campaignMock dateStart]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
+  OCMStub([campaignMock dateEnd]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
+  OCMStub([campaignMock messageCenterDetails]).andReturn(messageCenterDetailsMock);
+  OCMStub([campaignStateMock status]).andReturn(campaignStateMock);
+
+  OCMExpect([self.swrve messageCenterCampaignWithID:44 andPersonalization:nil]).andReturn(campaignMock);
+
+  XCTestExpectation *promiseResolved = [self expectationWithDescription:@"promiseResolved"];
+
+  [self.plugin getMessageCenterCampaignWithId:44 andPersonalization:nil resolver:^(id result) {
+
+    XCTAssertNotNil(result, @"result should not be null");
+
+    NSDictionary *campaign = result;
+    XCTAssertNotNil(campaign, @"Campaign from Message Center should not be null");
+    XCTAssertEqualObjects([campaign objectForKey:@"name"], @"IAM name");
+    XCTAssertEqualObjects([campaign objectForKey:@"subject"], @"IAM subject");
+    XCTAssertEqual([[campaign objectForKey:@"ID"] integerValue], 44);
+    XCTAssertTrue([campaign objectForKey:@"messageCenter"], @"messageCenter should be true");
+    XCTAssertEqual([[campaign objectForKey:@"maxImpressions"] integerValue], 11111);
+    XCTAssertEqual([[campaign objectForKey:@"downloadDate"] integerValue], 1362671700);
+    XCTAssertEqual([[campaign objectForKey:@"dateStart"] integerValue], 1362671700);
+    XCTAssertEqual([[campaign objectForKey:@"dateEnd"] integerValue], 1362671700);
+
+    NSDictionary *campaignState = [campaign objectForKey:@"state"];
+    XCTAssertEqual([[campaignState objectForKey:@"next"] integerValue], 0);
+    XCTAssertEqualObjects([campaignState objectForKey:@"status"], @"Unseen");
+    XCTAssertEqual([[campaignState objectForKey:@"impressions"] integerValue], 0);
+    
+    NSDictionary *campaignMessageCenterDetails = [campaign objectForKey:@"messageCenterDetails"];
+    XCTAssertEqualObjects([campaignMessageCenterDetails objectForKey:@"subject"], @"IAM message center subject");
+//    XCTAssertEqualObjects([campaignMessageCenterDetails objectForKey:@"description"], @"IAM message center description");
+    XCTAssertEqualObjects([campaignMessageCenterDetails objectForKey:@"imageAccessibilityText"], @"IAM message center image accesibility text");
+    XCTAssertEqualObjects([campaignMessageCenterDetails objectForKey:@"imageURL"], @"https://faker.image.com/dummyimage.png");
+    NSString *cacheFolder = [SwrvePluginTests campaignCacheDirectory];
+    NSString *assetFilePath = [cacheFolder stringByAppendingPathComponent:imageURLSha];
+    XCTAssertEqualObjects([campaignMessageCenterDetails objectForKey:@"image"], assetFilePath);
+    XCTAssertEqualObjects([campaignMessageCenterDetails objectForKey:@"imageSha"], @"0590479d0050002e99f411f72d0d635351134a12");
+
+    [SwrvePluginTests removeDummyAsset:imageURLSha];
+    [promiseResolved fulfill];
+
+  } rejecter:^(NSString *code, NSString *message, NSError *error) {
+    XCTFail(@"Rejected: this should not be rejected");
+  }];
+
+  // waiting for resolver to complete
+  [self waitForExpectationsWithTimeout:15 handler:^(NSError *error) {
+      if (error) {
+          XCTFail(@"Ran out of time: GetMessageCenter");
+      }
+  }];
+  
+  OCMVerify([self.swrve messageCenterCampaignWithID:44 andPersonalization:nil]);
+}
+
+- (void) testGetMessageCenterCampaignUsingFallback {
+    SwrveCampaign *campaignMock = OCMClassMock([SwrveCampaign class]);
+    SwrveCampaignState *campaignStateMock = OCMClassMock([SwrveCampaignState class]);
+    SwrveMessageCenterDetails *messageCenterDetailsMock = OCMClassMock([SwrveMessageCenterDetails class]);
+
+    // Mock Campaign Message Center Details
+    OCMStub([messageCenterDetailsMock imageUrl]).andReturn(@"https://faker.image.com/dummyimage.png");
+    NSString *imageSha = @"0590479d0050002e99f411f72d0d635351134a12";
+    OCMStub([messageCenterDetailsMock imageSha]).andReturn(imageSha);
+    [SwrvePluginTests createDummyAsset:imageSha]; // create dummy asset using the fallback instead of the url
+
+    // Mock Campaign
+    OCMStub([campaignMock ID]).andReturn(44);
+    OCMStub([campaignMock subject]).andReturn(@"IAM subject");
+    OCMStub([campaignMock name]).andReturn(@"IAM name");
+    OCMStub([campaignMock messageCenter]).andReturn(true);
+    OCMStub([campaignMock maxImpressions]).andReturn(11111);
+    OCMStub([campaignMock priority]).andReturn([NSNumber numberWithInt:(9999)]);
+    OCMStub([campaignMock downloadDate]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
+    OCMStub([campaignMock dateStart]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
+    OCMStub([campaignMock dateEnd]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
+    OCMStub([campaignMock messageCenterDetails]).andReturn(messageCenterDetailsMock);
+    OCMStub([campaignStateMock status]).andReturn(campaignStateMock);
+
+    OCMExpect([self.swrve messageCenterCampaignWithID:44 andPersonalization:nil]).andReturn(campaignMock);
+
+    XCTestExpectation *promiseResolved = [self expectationWithDescription:@"promiseResolved"];
+
+    [self.plugin getMessageCenterCampaignWithId:44 andPersonalization:nil resolver:^(id result) {
+
+        XCTAssertNotNil(result, @"result should not be null");
+
+        NSDictionary *campaign = result;
+        NSDictionary *campaignMessageCenterDetails = [campaign objectForKey:@"messageCenterDetails"];
+        XCTAssertEqualObjects([campaignMessageCenterDetails objectForKey:@"imageURL"], @"https://faker.image.com/dummyimage.png");
+        NSString *cacheFolder = [SwrvePluginTests campaignCacheDirectory];
+        NSString *assetFilePath = [cacheFolder stringByAppendingPathComponent:imageSha];
+        XCTAssertEqualObjects([campaignMessageCenterDetails objectForKey:@"image"], assetFilePath); // verify that the fallback is the file path
+        XCTAssertEqualObjects([campaignMessageCenterDetails objectForKey:@"imageSha"], @"0590479d0050002e99f411f72d0d635351134a12");
+
+        [SwrvePluginTests removeDummyAsset:imageSha];
+        [promiseResolved fulfill];
+
+    } rejecter:^(NSString *code, NSString *message, NSError *error) {
+        XCTFail(@"Rejected: this should not be rejected");
+    }];
+
+    // waiting for resolver to complete
+    [self waitForExpectationsWithTimeout:15 handler:^(NSError *error) {
+        if (error) {
+            XCTFail(@"Ran out of time: GetMessageCenter");
+        }
+    }];
+
+    OCMVerify([self.swrve messageCenterCampaignWithID:44 andPersonalization:nil]);
+}
+
 
 - (void) testShowMessageCenterCampaign {
   // Mock campaign response since we search by number
@@ -553,4 +721,32 @@
 
   OCMVerify([self.swrve personalizeEmbeddedMessageData:[OCMArg any] withPersonalization:[OCMArg any]]);
 }
+
+
++ (void)createDummyAsset:(NSString *)asset {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    [fileManager createDirectoryAtPath:[SwrvePluginTests campaignCacheDirectory] withIntermediateDirectories:YES attributes:nil error:nil];
+    NSData *dummyData = [@"TestData" dataUsingEncoding:NSASCIIStringEncoding];
+    NSString *path = [[SwrvePluginTests campaignCacheDirectory] stringByAppendingPathComponent:asset];
+    [fileManager createFileAtPath:path contents:dummyData attributes:nil];
+}
+
++ (NSString *)campaignCacheDirectory {
+    return [[SwrvePluginTests rootCacheDirectory] stringByAppendingPathComponent:@"com.ngt.msgs"];
+}
+
++ (NSString *)rootCacheDirectory {
+    static NSString *_dir = nil;
+    if (!_dir) {
+        _dir = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject];
+    }
+    return _dir;
+}
+
++ (void)removeDummyAsset:(NSString *)asset {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *path = [[SwrvePluginTests campaignCacheDirectory] stringByAppendingPathComponent:asset];
+    [fileManager removeItemAtPath:path error:nil];
+}
+
 @end

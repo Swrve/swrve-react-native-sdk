@@ -18,8 +18,10 @@ NSString *const PUSH_EVENT_NAME = @"PushNotification";
 NSString *const SILENT_PUSH_EVENT_NAME = @"SilentPushNotification";
 NSString *const PUSH_EVENT_PAYLOAD = @"PushEventPayload";
 NSString *const CALLBACK_KEY_CUSTOM_BUTTON_ACTION = @"customAction";
+NSString *const CALLBACK_KEY_CUSTOM_BUTTON_ACTION_CAMPAIGN_NAME = @"campaignName";
 NSString *const CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT = @"campaignSubject";
 NSString *const CALLBACK_KEY_DISMISS_BUTTON_NAME = @"buttonName";
+NSString *const CALLBACK_KEY_DISMISS_CAMPAIGN_NAME = @"campaignName";
 NSString *const CALLBACK_KEY_CLIPBOARD_BUTTON_PROCESSED_TEXT = @"clipboardContents";
 NSString *const CALLBACK_KEY_EMBEDDED_MESSAGE_PERSONALIZATION_PROPERTIES_MAP = @"embeddedMessagePersonalizationProperties";
 NSString *const CALLBACK_KEY_EMBEDDED_MESSAGE_MAP = @"embeddedMessage";
@@ -119,7 +121,8 @@ RCT_EXPORT_MODULE();
 - (void)onMessageCustomButtonCallback:(NSNotification *)notification {
     if (self.hasListeners) {
         NSString *customAction = notification.userInfo[CALLBACK_KEY_CUSTOM_BUTTON_ACTION];
-        [self sendEventWithName:MESSAGE_CALLBACK_CUSTOM_EVENT_NAME body:@{CALLBACK_KEY_CUSTOM_BUTTON_ACTION: customAction}];
+        NSString *campaignName = notification.userInfo[CALLBACK_KEY_CUSTOM_BUTTON_ACTION_CAMPAIGN_NAME];
+        [self sendEventWithName:MESSAGE_CALLBACK_CUSTOM_EVENT_NAME body:@{CALLBACK_KEY_CUSTOM_BUTTON_ACTION: customAction, CALLBACK_KEY_CUSTOM_BUTTON_ACTION_CAMPAIGN_NAME: campaignName}];
     }
 }
 
@@ -127,7 +130,8 @@ RCT_EXPORT_MODULE();
     if (self.hasListeners) {
         NSString *campaignSubject = notification.userInfo[CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT];
         NSString *buttonName = notification.userInfo[CALLBACK_KEY_DISMISS_BUTTON_NAME];
-        [self sendEventWithName:MESSAGE_CALLBACK_DISMISS_EVENT_NAME body:@{CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT: campaignSubject, CALLBACK_KEY_DISMISS_BUTTON_NAME: buttonName}];
+        NSString *campaignName = notification.userInfo[CALLBACK_KEY_DISMISS_CAMPAIGN_NAME];
+        [self sendEventWithName:MESSAGE_CALLBACK_DISMISS_EVENT_NAME body:@{CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT: campaignSubject, CALLBACK_KEY_DISMISS_BUTTON_NAME: buttonName, CALLBACK_KEY_DISMISS_CAMPAIGN_NAME: campaignName}];
     }
 }
 

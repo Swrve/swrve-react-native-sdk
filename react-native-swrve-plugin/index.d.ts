@@ -4,8 +4,8 @@ export type InitMode = 'auto' | 'managed';
 export type AndroidPushImportance = 'none' | 'min' | 'low' | 'default' | 'max';
 export type PushListener = (payload: string) => void;
 export type UserResourcesListener = () => void;
-export type MessageCustomButtonPressedListener = (action: string) => void;
-export type MessageDismissButtonPressedListener = (campaignSubject: string, buttonName: string) => void;
+export type MessageCustomButtonPressedListener = (action: string, campaignName: string) => void;
+export type MessageDismissButtonPressedListener = (campaignSubject: string, buttonName: string, campaignName: string) => void;
 export type MessageClipboardButtonPressedListener = (processedText: string) => void;
 export type EmbeddedMessageCampaignListener = (embeddedMessage: Map, personalizationProperties?: Map) => void;
 
@@ -29,7 +29,7 @@ export interface SwrveMessageListeners {
 }
 
 export interface SwrveEmbeddedMessageListeners {
-	embeddedMessageCampiagnListener?: EmbeddedMessageCampaignListener
+	embeddedMessageCampaignListener?: EmbeddedMessageCampaignListener
 }
 
 /// Push and Resource and Campaign Listeners
@@ -118,6 +118,8 @@ export function getUserResourcesDiff(): Promise<Map>;
 export function getRealTimeUserProperties(): Promise<Map>;
 
 export function getMessageCenterCampaigns(personalization?: Map): Promise<Array<Map>>;
+
+export function getMessageCenterCampaign(campaignId: number, personalization?: Map): Promise<Map>;
 
 export function getPersonalizedText(text: string, personalizationProperties: Map): Promise<string>;
 

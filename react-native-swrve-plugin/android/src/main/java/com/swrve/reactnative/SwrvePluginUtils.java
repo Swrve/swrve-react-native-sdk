@@ -26,30 +26,33 @@ import static com.swrve.reactnative.SwrvePluginModule.LOG_TAG;
 public class SwrvePluginUtils {
 
   static Map<String, String> convertToStringMap(ReadableMap readableMap) {
-    Map<String, String> map = new HashMap<>();
-    ReadableMapKeySetIterator iterator = readableMap.keySetIterator();
+    Map<String, String> map = null;
 
-    while (iterator.hasNextKey()) {
-      String key = iterator.nextKey();
-      ReadableType type = readableMap.getType(key);
+    if (readableMap != null) {
+      map = new HashMap<>();
+      ReadableMapKeySetIterator iterator = readableMap.keySetIterator();
 
-      switch (type) {
-      case Boolean:
-        map.put(key, String.valueOf(readableMap.getBoolean(key)));
-        break;
-      case Number:
-        map.put(key, String.valueOf(readableMap.getDouble(key)));
-        break;
-      case String:
-        map.put(key, String.valueOf(readableMap.getString(key)));
-        break;
-      case Map:
-      case Array:
-      case Null:
-        break;
+      while (iterator.hasNextKey()) {
+        String key = iterator.nextKey();
+        ReadableType type = readableMap.getType(key);
+
+        switch (type) {
+          case Boolean:
+            map.put(key, String.valueOf(readableMap.getBoolean(key)));
+            break;
+          case Number:
+            map.put(key, String.valueOf(readableMap.getDouble(key)));
+            break;
+          case String:
+            map.put(key, String.valueOf(readableMap.getString(key)));
+            break;
+          case Map:
+          case Array:
+          case Null:
+            break;
+        }
       }
     }
-
     return map;
   }
 

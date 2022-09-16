@@ -219,9 +219,9 @@ PODS:
   - React-jsinspector (0.68.1)
   - React-logger (0.68.1):
     - glog
-  - react-native-swrve-plugin (3.1.0):
+  - react-native-swrve-plugin (3.2.0):
     - React-Core
-    - SwrveSDK (~> 7.0)
+    - SwrveSDK (~> 8.1.0)
   - React-perflogger (0.68.1)
   - React-RCTActionSheet (0.68.1):
     - React-Core/RCTActionSheetHeaders (= 0.68.1)
@@ -287,9 +287,13 @@ PODS:
     - React-jsi (= 0.68.1)
     - React-logger (= 0.68.1)
     - React-perflogger (= 0.68.1)
-  - SwrveSDK (7.5.0):
-    - SwrveSDKCommon (= 7.5.0)
-  - SwrveSDKCommon (7.5.0)
+  - SDWebImage (5.13.2):
+    - SDWebImage/Core (= 5.13.2)
+  - SDWebImage/Core (5.13.2)
+  - SwrveSDK (8.1.0):
+    - SDWebImage (~> 5.0)
+    - SwrveSDKCommon (= 8.1.0)
+  - SwrveSDKCommon (8.1.0)
   - Yoga (1.14.0)
 
 DEPENDENCIES:
@@ -333,6 +337,7 @@ SPEC REPOS:
   trunk:
     - fmt
     - OCMock
+    - SDWebImage
     - SwrveSDK
     - SwrveSDKCommon
 
@@ -423,7 +428,7 @@ SPEC CHECKSUMS:
   React-jsiexecutor: 4a4bae5671b064a2248a690cf75957669489d08c
   React-jsinspector: 218a2503198ff28a085f8e16622a8d8f507c8019
   React-logger: f79dd3cc0f9b44f5611c6c7862badd891a862cf8
-  react-native-swrve-plugin: 7f5bffbbd77535b70e4f3a05ae1c5e2c0066561b
+  react-native-swrve-plugin: a06f89e3ecc2b909d541d2691cafd2f124a2393c
   React-perflogger: 30ab8d6db10e175626069e742eead3ebe8f24fd5
   React-RCTActionSheet: 4b45da334a175b24dabe75f856b98fed3dfd6201
   React-RCTAnimation: d6237386cb04500889877845b3e9e9291146bc2e
@@ -436,10 +441,11 @@ SPEC CHECKSUMS:
   React-RCTVibration: 9e344c840176b0af9c84d5019eb4fed8b3c105a1
   React-runtimeexecutor: 7285b499d0339104b2813a1f58ad1ada4adbd6c0
   ReactCommon: bf2888a826ceedf54b99ad1b6182d1bc4a8a3984
-  SwrveSDK: 76a82e7d53a04bcf29959438e52c9ed0caf7ee85
-  SwrveSDKCommon: 5bfd03557a17f90927eb962987e04d4700ef3d5d
+  SDWebImage: 72f86271a6f3139cc7e4a89220946489d4b9a866
+  SwrveSDK: e245c8de1ded893e7319a5308762fdf38c9bb18a
+  SwrveSDKCommon: e93ca3daef9f255716f83226390ca2b12e2eb162
   Yoga: 17cd9a50243093b547c1e539c749928dd68152da
 
 PODFILE CHECKSUM: 361aa22a2fd5d8ccabfac1018e6089f86f2f3cf5
 
-COCOAPODS: 1.11.2
+COCOAPODS: 1.11.3

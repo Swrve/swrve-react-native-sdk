@@ -4,10 +4,11 @@
 #import "SwrvePluginEventEmitter.h"
 #import "SwrveCallbackStateManager.h"
 #import "SwrvePluginPushHandler.h"
+#import <SwrveSDKCommon/SwrveUtils.h>
 #import <SwrveSDK/SwrveSDK.h>
 #import <SwrveSDK/SwrveCampaign.h>
 
-#define SWRVE_PLUGIN_VERSION "3.2.0"
+#define SWRVE_PLUGIN_VERSION "4.0.0"
 
 @interface SwrvePlugin ()
 
@@ -42,14 +43,14 @@ RCT_EXPORT_MODULE()
 
     // Set callbacks
     if([config.inAppMessageConfig dismissButtonCallback] == nil) {
-        [config.inAppMessageConfig setDismissButtonCallback:^(NSString *campaignSubject, NSString *buttonName) {
-           [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_DISMISS_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT: campaignSubject, CALLBACK_KEY_DISMISS_BUTTON_NAME: buttonName}];
+        [config.inAppMessageConfig setDismissButtonCallback:^(NSString *campaignSubject, NSString *buttonName, NSString* campaignName) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_DISMISS_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT: campaignSubject, CALLBACK_KEY_DISMISS_BUTTON_NAME: buttonName, CALLBACK_KEY_DISMISS_CAMPAIGN_NAME: campaignName}];
         }];
     }
 
     if([config.inAppMessageConfig customButtonCallback] == nil) {
-        [config.inAppMessageConfig setCustomButtonCallback:^(NSString *action) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_CUSTOM_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_CUSTOM_BUTTON_ACTION: action}];
+        [config.inAppMessageConfig setCustomButtonCallback:^(NSString *action, NSString* campaignName) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_CUSTOM_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_CUSTOM_BUTTON_ACTION: action, CALLBACK_KEY_CUSTOM_BUTTON_ACTION_CAMPAIGN_NAME: campaignName}];
             [SwrvePlugin handleCustom:action];
         }];
     }
@@ -344,10 +345,13 @@ RCT_REMAP_METHOD(getUserResources, getUserResourcesWithResolver:(RCTPromiseResol
 
 RCT_REMAP_METHOD(getUserResourcesDiff, getUserResourcesDiffWithResolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     @try {
-        [self.swrveInstance userResourcesDiff:^(NSDictionary *oldResourcesValues, NSDictionary *newResourcesValues, NSString *resourcesAsJSON) {
+        [self.swrveInstance userResourcesDiffWithListener:^(NSDictionary *oldResourcesValues, NSDictionary *newResourcesValues, NSString *resourcesAsJSON, BOOL fromServer, NSError *error) {
             NSMutableDictionary* userResourcesDiff = [NSMutableDictionary new];
             [userResourcesDiff setObject:oldResourcesValues forKey:@"oldResourcesValues"];
             [userResourcesDiff setObject:newResourcesValues forKey:@"newResourcesValues"];
+            [userResourcesDiff setObject:[NSNumber numberWithBool:fromServer] forKey:@"fromServer"];
+            [userResourcesDiff setObject:(error != nil ? error.localizedDescription : @"") forKey:@"error"];
+
             resolve(userResourcesDiff);
         }];
     } @catch ( NSException *ex ) {
@@ -358,7 +362,6 @@ RCT_REMAP_METHOD(getUserResourcesDiff, getUserResourcesDiffWithResolver:(RCTProm
 
 RCT_REMAP_METHOD(getMessageCenterCampaigns, getMessageCenterCampaignsWithPersonalization:(NSDictionary * _Nullable)personalization resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     @try {
-
         NSArray<SwrveCampaign *> *campaigns;
         if (personalization != nil) {
             campaigns = [self.swrveInstance messageCenterCampaignsWithPersonalization:personalization];
@@ -369,32 +372,32 @@ RCT_REMAP_METHOD(getMessageCenterCampaigns, getMessageCenterCampaignsWithPersona
         NSMutableArray *messageAsArray = [[NSMutableArray alloc] init];
 
         for (SwrveCampaign *campaign in campaigns) {
-            NSMutableDictionary *campaignDictionary = [[NSMutableDictionary alloc] init];
-            [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[campaign ID]] forKey:@"ID"];
-            [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[campaign maxImpressions]] forKey:@"maxImpressions"];
-            [campaignDictionary setValue:[campaign subject] forKey:@"subject"];
-            [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[[campaign dateStart] timeIntervalSince1970]] forKey:@"dateStart"];
-            [campaignDictionary setValue:@([campaign messageCenter]) forKey:@"messageCenter"];
-
-            NSMutableDictionary *stateDictionary = [NSMutableDictionary dictionaryWithDictionary:[[campaign state] asDictionary]];
-
-            // Remove unused ID
-            [stateDictionary removeObjectForKey:@"ID"];
-
-            // convert the status to a readable format so its consistent across both platforms
-            NSUInteger statusNumber = [[stateDictionary objectForKey:@"status"] integerValue];
-            [stateDictionary setObject:[self translateCampaignStatus:statusNumber] forKey:@"status"];
-            [campaignDictionary setObject:stateDictionary forKey:@"state"];
+            NSMutableDictionary *campaignDictionary = [self mapSwrveCampaignToMessageCenterJSON:campaign];
             [messageAsArray addObject:campaignDictionary];
         }
 
         resolve(messageAsArray);
-
     } @catch ( NSException *ex ) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
 }
+
+RCT_REMAP_METHOD(getMessageCenterCampaign, getMessageCenterCampaignWithId:(NSInteger)campaignID andPersonalization:(NSDictionary * _Nullable) personalization resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+    @try {
+        SwrveCampaign *candidate = [self.swrveInstance messageCenterCampaignWithID:campaignID andPersonalization:personalization];
+        if (candidate) {
+            NSMutableDictionary *campaignDictionary = [self mapSwrveCampaignToMessageCenterJSON:candidate];
+            resolve(campaignDictionary);
+        } else {
+            reject(@"SwrvePlugin", @"Unable to find campaign", nil);
+        }
+    } @catch ( NSException *ex ) {
+        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
+        reject(ex.name, ex.reason, error);
+    }
+}
+
 
 RCT_REMAP_METHOD(showMessageCenterCampaign, showMessageCenterCampaignWithId:(NSInteger)campaignId withPersonalization:(NSDictionary * _Nullable) personalization) {
 
@@ -472,11 +475,11 @@ RCT_REMAP_METHOD(getPersonalizedEmbeddedMessageData, getPersonalizedEmbeddedMess
     @try {
         SwrveEmbeddedCampaign *candidate = [self findEmbeddedCampaignByID:campaignId];
         NSString *personalizedEmbeddedMessageData = [[NSString alloc] init];
-        
+
         if (candidate) {
             personalizedEmbeddedMessageData = [self.swrveInstance personalizeEmbeddedMessageData:[candidate message] withPersonalization:personalizationProperties];
         }
-        
+
         resolve(personalizedEmbeddedMessageData);
     } @catch ( NSException *ex ) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
@@ -550,6 +553,69 @@ RCT_EXPORT_METHOD(listeningCustom) {
     return canditiate;
 }
 
+- (NSMutableDictionary *) mapSwrveCampaignToMessageCenterJSON:(SwrveCampaign *) campaign {
+    NSMutableDictionary *campaignDictionary = [[NSMutableDictionary alloc] init];
+    
+    [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[campaign ID]] forKey:@"ID"];
+    [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[campaign maxImpressions]] forKey:@"maxImpressions"];
+    [campaignDictionary setValue:[campaign subject] forKey:@"subject"];
+    [campaignDictionary setValue:[campaign name] forKey:@"name"];
+    [campaignDictionary setValue:[campaign priority] forKey:@"priority"];
+    [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[[campaign downloadDate] timeIntervalSince1970]] forKey:@"downloadDate"];
+    [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[[campaign dateStart] timeIntervalSince1970]] forKey:@"dateStart"];
+    [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[[campaign dateEnd] timeIntervalSince1970]] forKey:@"dateEnd"];
+    [campaignDictionary setValue:@([campaign messageCenter]) forKey:@"messageCenter"];
+
+    NSMutableDictionary *stateDictionary = [NSMutableDictionary dictionaryWithDictionary:[[campaign state] asDictionary]];
+
+    // convert the status to a readable format so its consistent across both platforms
+    NSUInteger statusNumber = [[stateDictionary objectForKey:@"status"] integerValue];
+    [stateDictionary setObject:[self translateCampaignStatus:statusNumber] forKey:@"status"];
+    [campaignDictionary setObject:stateDictionary forKey:@"state"];
+    
+    if ([campaign messageCenterDetails] != nil) {
+        SwrveMessageCenterDetails *campaignMessageCenterDetails = [campaign messageCenterDetails];
+
+        // create the messageCenterDetails dict below keys will have value || ""
+        NSMutableDictionary *campaignMessageCenterDetailsDictionary = [[NSMutableDictionary alloc] init];
+        if ([campaignMessageCenterDetails subject]) {
+            [campaignMessageCenterDetailsDictionary setValue:[campaignMessageCenterDetails subject] forKey:@"subject"];
+        }
+        if ([campaignMessageCenterDetails description]) {
+            [campaignMessageCenterDetailsDictionary setValue:[campaignMessageCenterDetails description] forKey:@"description"];
+        }
+        if ([campaignMessageCenterDetails imageAccessibilityText]) {
+            [campaignMessageCenterDetailsDictionary setValue:[campaignMessageCenterDetails imageAccessibilityText] forKey:@"imageAccessibilityText"];
+        }
+
+        NSString *imageFilePath = nil;
+        if ([campaignMessageCenterDetails imageUrl]) {
+            NSString *imageURL = [campaignMessageCenterDetails imageUrl];
+            [campaignMessageCenterDetailsDictionary setValue:imageURL forKey:@"imageURL"];
+
+            NSData *imageURLData = [imageURL dataUsingEncoding:NSUTF8StringEncoding allowLossyConversion:YES];
+            NSString *imageURLSha = [SwrveUtils sha1:imageURLData];
+            imageFilePath = [self filePathForAsset:imageURLSha];
+        }
+
+        if ([campaignMessageCenterDetails imageSha]) {
+            NSString *imageSha = [campaignMessageCenterDetails imageSha];
+            [campaignMessageCenterDetailsDictionary setValue:imageSha forKey:@"imageSha"];
+
+            if (!imageFilePath) {
+                imageFilePath = [self filePathForAsset:imageSha];
+            }
+        }
+
+        if (imageFilePath) {
+            [campaignMessageCenterDetailsDictionary setValue:imageFilePath forKey:@"image"];
+        }
+
+        [campaignDictionary setObject:campaignMessageCenterDetailsDictionary forKey:@"messageCenterDetails"];
+    }
+    return campaignDictionary;
+}
+
 - (NSMutableDictionary *) getCache {
     NSString *userId = [self.swrveInstance userID];
     NSData *dataFile = [NSData dataWithContentsOfFile:[SwrveLocalStorage campaignsFilePathForUserId:userId]];
@@ -566,6 +632,15 @@ RCT_EXPORT_METHOD(listeningCustom) {
         }
     }
     return dictionary;
+}
+
+- (NSString *)filePathForAsset:(NSString *)asset {
+    NSString *cacheFolder = [SwrveLocalStorage swrveCacheFolder];
+    NSString *assetFilePath = [cacheFolder stringByAppendingPathComponent:asset];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:assetFilePath]) {
+        return assetFilePath;
+    }
+    return nil;
 }
 
 - (SwrveEmbeddedCampaign *) findEmbeddedCampaignByID:(NSInteger) campaignId {

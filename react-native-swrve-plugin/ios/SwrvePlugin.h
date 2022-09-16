@@ -76,6 +76,10 @@ NS_ASSUME_NONNULL_BEGIN
                                      resolver:(RCTPromiseResolveBlock)resolve
                                      rejecter:(RCTPromiseRejectBlock)reject;
 
+- (void)getMessageCenterCampaignWithId:(NSInteger)campaignID andPersonalization:(NSDictionary * _Nullable)personalizationProperties
+                                     resolver:(RCTPromiseResolveBlock)resolve
+                                     rejecter:(RCTPromiseRejectBlock)reject;
+
 - (void)getPersonalizedTextWithText:(NSString *)text andPersonalization:(NSDictionary *)personalizationProperties
                            resolver:(RCTPromiseResolveBlock)resolve
                            rejecter:(RCTPromiseRejectBlock)reject;

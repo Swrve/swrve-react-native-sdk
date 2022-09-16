@@ -32,8 +32,10 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule
     private final String SILENT_PUSH_EVENT_NAME = "SilentPushNotification";
     private final String PUSH_EVENT_PAYLOAD = "PushEventPayload";
     private final String CALLBACK_KEY_CUSTOM_BUTTON_ACTION = "customAction";
+    private final String CALLBACK_KEY_CUSTOM_BUTTON_ACTION_CAMPAIGN_NAME = "campaignName";
     private final String CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT = "campaignSubject";
     private final String CALLBACK_KEY_DISMISS_BUTTON_NAME = "buttonName";
+    private final String CALLBACK_KEY_DISMISS_CAMPAIGN_NAME = "campaignName";
     private final String CALLBACK_KEY_CLIPBOARD_BUTTON_PROCESSED_TEXT = "clipboardContents";
     private final String CALLBACK_KEY_EMBEDDED_MESSAGE_PERSONALIZATION_PROPERTIES_MAP = "embeddedMessagePersonalizationProperties";
     private final String CALLBACK_KEY_EMBEDDED_MESSAGE_MAP = "embeddedMessage";
@@ -102,10 +104,11 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule
         }
     }
 
-    public void onCustomAction(String customAction) {
+    public void onCustomAction(String customAction, String campaignName) {
         try {
             WritableMap params = Arguments.createMap();
             params.putString(CALLBACK_KEY_CUSTOM_BUTTON_ACTION, customAction);
+            params.putString(CALLBACK_KEY_CUSTOM_BUTTON_ACTION_CAMPAIGN_NAME, campaignName);
             reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                     .emit(MESSAGE_CALLBACK_CUSTOM_EVENT_NAME, params);
 
@@ -129,11 +132,12 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule
         }
     }
 
-    public void onDismissAction(String campaignSubject, String buttonName) {
+    public void onDismissAction(String campaignSubject, String buttonName, String campaignName) {
         try {
             WritableMap params = Arguments.createMap();
             params.putString(CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT, campaignSubject);
             params.putString(CALLBACK_KEY_DISMISS_BUTTON_NAME, buttonName);
+            params.putString(CALLBACK_KEY_DISMISS_CAMPAIGN_NAME, campaignName);
             reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
                     .emit(MESSAGE_CALLBACK_DISMISS_EVENT_NAME, params);
         } catch (Exception e) {
