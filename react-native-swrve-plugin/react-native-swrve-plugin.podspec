@@ -18,5 +18,10 @@ Pod::Spec.new do |s|
   s.requires_arc = true
 
   s.dependency "React-Core"
-  s.dependency "SwrveSDK", "~> 8.1.0"
+# Use optimistic operator to get all minor versions up to (but excluding) the next major version. 
+# Do not add a second dot and number for a patch. Eg: 
+# Do something like "~> 8.0". 
+# DO NOT do something like "~> 8.0.0"
+  s.dependency "SwrveSDK", "~> 8.0"
+
 end

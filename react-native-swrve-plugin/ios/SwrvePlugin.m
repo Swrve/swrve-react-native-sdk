@@ -8,7 +8,7 @@
 #import <SwrveSDK/SwrveSDK.h>
 #import <SwrveSDK/SwrveCampaign.h>
 
-#define SWRVE_PLUGIN_VERSION "4.0.0"
+#define SWRVE_PLUGIN_VERSION "4.0.1"
 
 @interface SwrvePlugin ()
 
