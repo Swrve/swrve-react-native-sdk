@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
+import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -23,6 +24,7 @@ import com.swrve.sdk.ISwrveBase;
 import com.swrve.sdk.ISwrveCampaignManager;
 import com.swrve.sdk.Swrve;
 import com.swrve.sdk.SwrveCampaignDisplayer;
+import com.swrve.sdk.SwrveDeeplinkListener;
 import com.swrve.sdk.SwrveHelper;
 import com.swrve.sdk.SwrveIAPRewards;
 import com.swrve.sdk.SwrveIdentityResponse;
@@ -41,6 +43,7 @@ import com.swrve.sdk.messaging.SwrveClipboardButtonListener;
 import com.swrve.sdk.messaging.SwrveCustomButtonListener;
 import com.swrve.sdk.messaging.SwrveDismissButtonListener;
 import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
+import com.swrve.sdk.messaging.SwrveEmbeddedListener;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessageListener;
 
@@ -67,7 +70,7 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     final static String LOG_TAG = "SwrvePluginModule";
     static SwrveListenerDelegateHolder delegateHolder = new SwrveListenerDelegateHolder();
 
-    public static String SWRVE_PLUGIN_VERSION = "4.0.1";
+    public static String SWRVE_PLUGIN_VERSION = "4.1.0";
     private final String MODULE_NAME = "SwrvePlugin";
     private final ReactApplicationContext reactContext;
 
@@ -184,10 +187,11 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
         SwrveInAppMessageConfig inAppConfig = setupInAppMessageConfig(config);
         config.setInAppMessageConfig(inAppConfig);
 
-        // Override all embedded callbacks for embedded action listeners
-        SwrveEmbeddedMessageConfig embeddedConfig = setUpEmbeddedMessageConfig(config);
-        config.setEmbeddedMessageConfig(embeddedConfig);
+        SwrveEmbeddedMessageConfig embeddedMessageConfig = setUpEmbeddedMessageConfig(config);
+        config.setEmbeddedMessageConfig(embeddedMessageConfig);
 
+        setupDeeplinkListener(config);
+        
         SwrveSDK.createInstance(application, appId, apiKey, config);
         sendPluginVersion();
     }
@@ -571,6 +575,17 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void embeddedControlMessageImpressionEvent(int campaignId) {
+        SwrveEmbeddedCampaign EmbeddedCampaign = findEmbeddedCampaignByID(campaignId);
+
+        if (EmbeddedCampaign != null) {
+            getSwrveInstance().embeddedControlMessageImpressionEvent(EmbeddedCampaign.getMessage());
+        } else {
+            Log.e(LOG_TAG, "Unable to find campaign of id: " + campaignId);
+        }
+    }
+
+    @ReactMethod
     public void refreshCampaignsAndResources() {
         getSwrveInstance().refreshCampaignsAndResources();
     }
@@ -595,6 +610,21 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void listeningCustom() {
         delegateHolder.delegate.setListeningCustom(true);
+    }
+
+    @ReactMethod
+    public void listeningDeeplink() {
+        delegateHolder.delegate.setListeningDeeplink(true);
+    }
+
+    @ReactMethod
+    public void listeningEmbeddedCallbackWithControl() {
+        delegateHolder.delegate.setEmbeddedWithControlCallback(true);
+    }
+
+    @ReactMethod
+    public void listeningInAppMessageListener() {
+        delegateHolder.delegate.setListeningInAppMessageListener(true);
     }
 
     // Private Methods
@@ -705,6 +735,17 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
         }
     }
 
+
+    private static void setupDeeplinkListener(SwrveConfig config) {
+        if (config.getSwrveDeeplinkListener() == null) {
+            config.setSwrveDeeplinkListener(new SwrveDeeplinkListener() {
+                @Override
+                public void handleDeeplink(Context context, String uri, Bundle extras) {
+                    delegateHolder.delegate.onDeeplinkDelegate(uri);
+                }
+            });
+        }
+    }
     private static SwrveInAppMessageConfig setupInAppMessageConfig(SwrveConfig config) {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder();
 
@@ -764,6 +805,13 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
             inAppConfigBuilder.personalizationProvider(passedInAppConfig.getPersonalizationProvider());
         }
 
+        // Set InApp Message Listener
+        if (passedInAppConfig.getMessageListener() == null) {
+            inAppConfigBuilder.messageListener((context, action, messageDetails, selectedButton) -> delegateHolder.delegate.onMessageDetailDelegate(action, messageDetails, selectedButton));
+        } else {
+            inAppConfigBuilder.messageListener(passedInAppConfig.getMessageListener());
+        }
+
         return inAppConfigBuilder.build();
     }
 
@@ -773,17 +821,22 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
         // Previous Config (just in case it was passed as part of Application.java)
         SwrveEmbeddedMessageConfig passedEmbeddedMessageConfig = config.getEmbeddedMessageConfig();
 
-        if(passedEmbeddedMessageConfig != null && passedEmbeddedMessageConfig.getEmbeddedMessageListener() != null) {
-            // If the embedded config has been set and a listener has been implemented use that listener
+        if (passedEmbeddedMessageConfig != null && passedEmbeddedMessageConfig.getEmbeddedMessageListener() != null) {
+            // If the embedded message config has been set and a listener has been implemented use that listener
             embeddedMessageConfigBuilder.embeddedMessageListener(passedEmbeddedMessageConfig.getEmbeddedMessageListener());
         } else {
-            embeddedMessageConfigBuilder.embeddedMessageListener(new SwrveEmbeddedMessageListener() {
-                @Override
-                public void onMessage(Context context, SwrveEmbeddedMessage message, Map<String, String> personalizationProperties) {
-                    delegateHolder.delegate.onEmbeddedMessageCallback(message, personalizationProperties);
-                }
-            });
+            embeddedMessageConfigBuilder.embeddedMessageListener((context, message, personalizationProperties)
+                    -> delegateHolder.delegate.onEmbeddedMessageCallback(message, personalizationProperties));
         }
+        
+        if (passedEmbeddedMessageConfig != null && passedEmbeddedMessageConfig.getEmbeddedListener() != null) {
+            // If the embedded config has been set and a listener has been implemented use that listener
+            embeddedMessageConfigBuilder.embeddedListener(passedEmbeddedMessageConfig.getEmbeddedListener());
+        } else {
+            embeddedMessageConfigBuilder.embeddedListener((context, message, personalizationProperties, isControl)
+                    -> delegateHolder.delegate.onEmbeddedCallback(message, personalizationProperties, isControl));
+        }
+
         return embeddedMessageConfigBuilder.build();
     }
 

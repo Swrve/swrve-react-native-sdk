@@ -17,6 +17,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, strong, nonnull) Swrve *swrveInstance;
 
++ (void) handleAction:(NSString *) nonProcessedAction;
+
 - (void)startWithUserId:(NSString *)userId;
 
 - (void)stopTracking;
@@ -97,6 +99,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)markEmbeddedMessageCampaignAsSeenWithId:(NSInteger)campaignId;
 
 - (void)markEmbeddedMessageButtonAsPressedWithId:(NSInteger)campaignId forButton:(NSString *)buttonName;
+
+- (void)embeddedControlMessageImpressionEventWithId:(NSInteger)campaignId;
 
 - (void)refreshCampaignsAndResources;
 

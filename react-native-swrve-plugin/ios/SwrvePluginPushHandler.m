@@ -16,8 +16,7 @@
 /// Actions are sent to the SwrvePluginEventEmitter via NSNotificationCenter to keep things quick and avoid any lifecycle issues
 @implementation SwrvePluginPushHandler
 
-+ (instancetype)sharedInstance
-{
++ (instancetype)sharedInstance {
     static SwrvePluginPushHandler *sharedInstance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -26,8 +25,7 @@
     return sharedInstance;
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         self.pushEventBuffer = [NSMutableArray new];
@@ -36,16 +34,14 @@
     return self;
 }
 
-- (void)resetStateForTesting
-{
+- (void)resetStateForTesting {
     [self.pushEventBuffer removeAllObjects];
     self.shouldBufferEvents = YES;
 }
 
 
 - (void) didReceiveNotificationResponse:(UNNotificationResponse *)response
-                  withCompletionHandler:(void (^)(void))completionHandler  API_AVAILABLE(ios(10.0))
-{
+                  withCompletionHandler:(void (^)(void))completionHandler  API_AVAILABLE(ios(10.0)) {
     NSDictionary *userInfo = response.notification.request.content.userInfo;
     NSLog(@"SwrvePlugin - SwrvePluginPushHandler - didReceiveNotificationResponse %@", userInfo);
     
@@ -59,8 +55,7 @@
 }
 
 /// Separate the logic from the callback method as it's not straightforward to create UNNotificationResponse for testing
-- (void) handleNotificationUserInfo:(NSDictionary*)userInfo
-{
+- (void) handleNotificationUserInfo:(NSDictionary *)userInfo {
     NSString* json = [SwrvePluginUtils serializeDictonaryToJson:userInfo withKey:nil];
     if (json) {
         if (self.shouldBufferEvents) {
@@ -72,8 +67,7 @@
 }
 
 - (void) willPresentNotification:(UNNotification *)notification
-           withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler  API_AVAILABLE(ios(10.0))
-{
+           withCompletionHandler:(void (^)(UNNotificationPresentationOptions))completionHandler  API_AVAILABLE(ios(10.0)) {
     if (completionHandler) {
         if (@available(iOS 10.0, *)) {
             completionHandler(UNNotificationPresentationOptionNone);

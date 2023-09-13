@@ -642,6 +642,39 @@
   OCMVerify([self.swrve embeddedMessageWasShownToUser:[OCMArg isKindOfClass:[SwrveEmbeddedMessage class]]]);
 }
 
+- (void)testEmbeddedControlMessageImpressionEvent {
+  NSDictionary *cache = @{
+    @"campaigns": @[
+        @{
+          @"id": @55,
+          @"start_date": @1630510173000,
+          @"end_date": @2145920400000,
+          @"rules": @{
+              @"delay_first_message": @180,
+              @"dismiss_after_views": @99999,
+              @"display_order": @"random",
+              @"min_delay_between_messages": @60
+          },
+          @"message_center": @true,
+          @"embedded_message": @{
+              @"id": @5,
+              @"name": @"Test message",
+              @"data": @"Hello test message",
+              @"type": @"other",
+              @"rules": @{},
+              @"priority": @9999,
+              @"subject": @""
+          }
+        }
+    ]
+  };
+  OCMStub([self.plugin getCache]).andReturn([cache mutableCopy]);
+  
+  [self.plugin embeddedControlMessageImpressionEventWithId: 55];
+  
+  OCMVerify([self.swrve embeddedControlMessageImpressionEvent:[OCMArg isKindOfClass:[SwrveEmbeddedMessage class]]]);
+}
+
 - (void) testMarkEmbeddedMessageButtonAsPressed {
   NSDictionary *cache = @{
     @"campaigns": @[

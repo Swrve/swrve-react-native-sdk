@@ -1,17 +1,17 @@
 PODS:
   - boost (1.76.0)
   - DoubleConversion (1.1.6)
-  - FBLazyVector (0.68.1)
-  - FBReactNativeSpec (0.68.1):
+  - FBLazyVector (0.68.7)
+  - FBReactNativeSpec (0.68.7):
     - RCT-Folly (= 2021.06.28.00-v2)
-    - RCTRequired (= 0.68.1)
-    - RCTTypeSafety (= 0.68.1)
-    - React-Core (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - ReactCommon/turbomodule/core (= 0.68.1)
+    - RCTRequired (= 0.68.7)
+    - RCTTypeSafety (= 0.68.7)
+    - React-Core (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - ReactCommon/turbomodule/core (= 0.68.7)
   - fmt (6.2.1)
   - glog (0.3.5)
-  - OCMock (3.6)
+  - OCMock (3.8.1)
   - RCT-Folly (2021.06.28.00-v2):
     - boost
     - DoubleConversion
@@ -23,277 +23,277 @@ PODS:
     - DoubleConversion
     - fmt (~> 6.2.1)
     - glog
-  - RCTRequired (0.68.1)
-  - RCTTypeSafety (0.68.1):
-    - FBLazyVector (= 0.68.1)
+  - RCTRequired (0.68.7)
+  - RCTTypeSafety (0.68.7):
+    - FBLazyVector (= 0.68.7)
     - RCT-Folly (= 2021.06.28.00-v2)
-    - RCTRequired (= 0.68.1)
-    - React-Core (= 0.68.1)
-  - React (0.68.1):
-    - React-Core (= 0.68.1)
-    - React-Core/DevSupport (= 0.68.1)
-    - React-Core/RCTWebSocket (= 0.68.1)
-    - React-RCTActionSheet (= 0.68.1)
-    - React-RCTAnimation (= 0.68.1)
-    - React-RCTBlob (= 0.68.1)
-    - React-RCTImage (= 0.68.1)
-    - React-RCTLinking (= 0.68.1)
-    - React-RCTNetwork (= 0.68.1)
-    - React-RCTSettings (= 0.68.1)
-    - React-RCTText (= 0.68.1)
-    - React-RCTVibration (= 0.68.1)
-  - React-callinvoker (0.68.1)
-  - React-Codegen (0.68.1):
-    - FBReactNativeSpec (= 0.68.1)
+    - RCTRequired (= 0.68.7)
+    - React-Core (= 0.68.7)
+  - React (0.68.7):
+    - React-Core (= 0.68.7)
+    - React-Core/DevSupport (= 0.68.7)
+    - React-Core/RCTWebSocket (= 0.68.7)
+    - React-RCTActionSheet (= 0.68.7)
+    - React-RCTAnimation (= 0.68.7)
+    - React-RCTBlob (= 0.68.7)
+    - React-RCTImage (= 0.68.7)
+    - React-RCTLinking (= 0.68.7)
+    - React-RCTNetwork (= 0.68.7)
+    - React-RCTSettings (= 0.68.7)
+    - React-RCTText (= 0.68.7)
+    - React-RCTVibration (= 0.68.7)
+  - React-callinvoker (0.68.7)
+  - React-Codegen (0.68.7):
+    - FBReactNativeSpec (= 0.68.7)
     - RCT-Folly (= 2021.06.28.00-v2)
-    - RCTRequired (= 0.68.1)
-    - RCTTypeSafety (= 0.68.1)
-    - React-Core (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - ReactCommon/turbomodule/core (= 0.68.1)
-  - React-Core (0.68.1):
+    - RCTRequired (= 0.68.7)
+    - RCTTypeSafety (= 0.68.7)
+    - React-Core (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - ReactCommon/turbomodule/core (= 0.68.7)
+  - React-Core (0.68.7):
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
-    - React-Core/Default (= 0.68.1)
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
+    - React-Core/Default (= 0.68.7)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
     - Yoga
-  - React-Core/CoreModulesHeaders (0.68.1):
-    - glog
-    - RCT-Folly (= 2021.06.28.00-v2)
-    - React-Core/Default
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
-    - Yoga
-  - React-Core/Default (0.68.1):
-    - glog
-    - RCT-Folly (= 2021.06.28.00-v2)
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
-    - Yoga
-  - React-Core/DevSupport (0.68.1):
-    - glog
-    - RCT-Folly (= 2021.06.28.00-v2)
-    - React-Core/Default (= 0.68.1)
-    - React-Core/RCTWebSocket (= 0.68.1)
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-jsinspector (= 0.68.1)
-    - React-perflogger (= 0.68.1)
-    - Yoga
-  - React-Core/RCTActionSheetHeaders (0.68.1):
+  - React-Core/CoreModulesHeaders (0.68.7):
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
     - React-Core/Default
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
     - Yoga
-  - React-Core/RCTAnimationHeaders (0.68.1):
+  - React-Core/Default (0.68.7):
+    - glog
+    - RCT-Folly (= 2021.06.28.00-v2)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
+    - Yoga
+  - React-Core/DevSupport (0.68.7):
+    - glog
+    - RCT-Folly (= 2021.06.28.00-v2)
+    - React-Core/Default (= 0.68.7)
+    - React-Core/RCTWebSocket (= 0.68.7)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-jsinspector (= 0.68.7)
+    - React-perflogger (= 0.68.7)
+    - Yoga
+  - React-Core/RCTActionSheetHeaders (0.68.7):
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
     - React-Core/Default
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
     - Yoga
-  - React-Core/RCTBlobHeaders (0.68.1):
+  - React-Core/RCTAnimationHeaders (0.68.7):
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
     - React-Core/Default
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
     - Yoga
-  - React-Core/RCTImageHeaders (0.68.1):
+  - React-Core/RCTBlobHeaders (0.68.7):
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
     - React-Core/Default
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
     - Yoga
-  - React-Core/RCTLinkingHeaders (0.68.1):
+  - React-Core/RCTImageHeaders (0.68.7):
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
     - React-Core/Default
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
     - Yoga
-  - React-Core/RCTNetworkHeaders (0.68.1):
+  - React-Core/RCTLinkingHeaders (0.68.7):
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
     - React-Core/Default
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
     - Yoga
-  - React-Core/RCTSettingsHeaders (0.68.1):
+  - React-Core/RCTNetworkHeaders (0.68.7):
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
     - React-Core/Default
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
     - Yoga
-  - React-Core/RCTTextHeaders (0.68.1):
+  - React-Core/RCTSettingsHeaders (0.68.7):
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
     - React-Core/Default
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
     - Yoga
-  - React-Core/RCTVibrationHeaders (0.68.1):
+  - React-Core/RCTTextHeaders (0.68.7):
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
     - React-Core/Default
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
     - Yoga
-  - React-Core/RCTWebSocket (0.68.1):
+  - React-Core/RCTVibrationHeaders (0.68.7):
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
-    - React-Core/Default (= 0.68.1)
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsiexecutor (= 0.68.1)
-    - React-perflogger (= 0.68.1)
+    - React-Core/Default
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
     - Yoga
-  - React-CoreModules (0.68.1):
+  - React-Core/RCTWebSocket (0.68.7):
+    - glog
     - RCT-Folly (= 2021.06.28.00-v2)
-    - RCTTypeSafety (= 0.68.1)
-    - React-Codegen (= 0.68.1)
-    - React-Core/CoreModulesHeaders (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-RCTImage (= 0.68.1)
-    - ReactCommon/turbomodule/core (= 0.68.1)
-  - React-cxxreact (0.68.1):
+    - React-Core/Default (= 0.68.7)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsiexecutor (= 0.68.7)
+    - React-perflogger (= 0.68.7)
+    - Yoga
+  - React-CoreModules (0.68.7):
+    - RCT-Folly (= 2021.06.28.00-v2)
+    - RCTTypeSafety (= 0.68.7)
+    - React-Codegen (= 0.68.7)
+    - React-Core/CoreModulesHeaders (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-RCTImage (= 0.68.7)
+    - ReactCommon/turbomodule/core (= 0.68.7)
+  - React-cxxreact (0.68.7):
     - boost (= 1.76.0)
     - DoubleConversion
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
-    - React-callinvoker (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-jsinspector (= 0.68.1)
-    - React-logger (= 0.68.1)
-    - React-perflogger (= 0.68.1)
-    - React-runtimeexecutor (= 0.68.1)
-  - React-jsi (0.68.1):
+    - React-callinvoker (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-jsinspector (= 0.68.7)
+    - React-logger (= 0.68.7)
+    - React-perflogger (= 0.68.7)
+    - React-runtimeexecutor (= 0.68.7)
+  - React-jsi (0.68.7):
     - boost (= 1.76.0)
     - DoubleConversion
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
-    - React-jsi/Default (= 0.68.1)
-  - React-jsi/Default (0.68.1):
+    - React-jsi/Default (= 0.68.7)
+  - React-jsi/Default (0.68.7):
     - boost (= 1.76.0)
     - DoubleConversion
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
-  - React-jsiexecutor (0.68.1):
+  - React-jsiexecutor (0.68.7):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-perflogger (= 0.68.1)
-  - React-jsinspector (0.68.1)
-  - React-logger (0.68.1):
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-perflogger (= 0.68.7)
+  - React-jsinspector (0.68.7)
+  - React-logger (0.68.7):
     - glog
-  - react-native-swrve-plugin (3.2.0):
+  - react-native-swrve-plugin (4.0.2):
     - React-Core
-    - SwrveSDK (~> 8.1.0)
-  - React-perflogger (0.68.1)
-  - React-RCTActionSheet (0.68.1):
-    - React-Core/RCTActionSheetHeaders (= 0.68.1)
-  - React-RCTAnimation (0.68.1):
+    - SwrveSDK (~> 8.0)
+  - React-perflogger (0.68.7)
+  - React-RCTActionSheet (0.68.7):
+    - React-Core/RCTActionSheetHeaders (= 0.68.7)
+  - React-RCTAnimation (0.68.7):
     - RCT-Folly (= 2021.06.28.00-v2)
-    - RCTTypeSafety (= 0.68.1)
-    - React-Codegen (= 0.68.1)
-    - React-Core/RCTAnimationHeaders (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - ReactCommon/turbomodule/core (= 0.68.1)
-  - React-RCTBlob (0.68.1):
+    - RCTTypeSafety (= 0.68.7)
+    - React-Codegen (= 0.68.7)
+    - React-Core/RCTAnimationHeaders (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - ReactCommon/turbomodule/core (= 0.68.7)
+  - React-RCTBlob (0.68.7):
     - RCT-Folly (= 2021.06.28.00-v2)
-    - React-Codegen (= 0.68.1)
-    - React-Core/RCTBlobHeaders (= 0.68.1)
-    - React-Core/RCTWebSocket (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-RCTNetwork (= 0.68.1)
-    - ReactCommon/turbomodule/core (= 0.68.1)
-  - React-RCTImage (0.68.1):
+    - React-Codegen (= 0.68.7)
+    - React-Core/RCTBlobHeaders (= 0.68.7)
+    - React-Core/RCTWebSocket (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-RCTNetwork (= 0.68.7)
+    - ReactCommon/turbomodule/core (= 0.68.7)
+  - React-RCTImage (0.68.7):
     - RCT-Folly (= 2021.06.28.00-v2)
-    - RCTTypeSafety (= 0.68.1)
-    - React-Codegen (= 0.68.1)
-    - React-Core/RCTImageHeaders (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-RCTNetwork (= 0.68.1)
-    - ReactCommon/turbomodule/core (= 0.68.1)
-  - React-RCTLinking (0.68.1):
-    - React-Codegen (= 0.68.1)
-    - React-Core/RCTLinkingHeaders (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - ReactCommon/turbomodule/core (= 0.68.1)
-  - React-RCTNetwork (0.68.1):
+    - RCTTypeSafety (= 0.68.7)
+    - React-Codegen (= 0.68.7)
+    - React-Core/RCTImageHeaders (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-RCTNetwork (= 0.68.7)
+    - ReactCommon/turbomodule/core (= 0.68.7)
+  - React-RCTLinking (0.68.7):
+    - React-Codegen (= 0.68.7)
+    - React-Core/RCTLinkingHeaders (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - ReactCommon/turbomodule/core (= 0.68.7)
+  - React-RCTNetwork (0.68.7):
     - RCT-Folly (= 2021.06.28.00-v2)
-    - RCTTypeSafety (= 0.68.1)
-    - React-Codegen (= 0.68.1)
-    - React-Core/RCTNetworkHeaders (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - ReactCommon/turbomodule/core (= 0.68.1)
-  - React-RCTSettings (0.68.1):
+    - RCTTypeSafety (= 0.68.7)
+    - React-Codegen (= 0.68.7)
+    - React-Core/RCTNetworkHeaders (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - ReactCommon/turbomodule/core (= 0.68.7)
+  - React-RCTSettings (0.68.7):
     - RCT-Folly (= 2021.06.28.00-v2)
-    - RCTTypeSafety (= 0.68.1)
-    - React-Codegen (= 0.68.1)
-    - React-Core/RCTSettingsHeaders (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - ReactCommon/turbomodule/core (= 0.68.1)
-  - React-RCTText (0.68.1):
-    - React-Core/RCTTextHeaders (= 0.68.1)
-  - React-RCTVibration (0.68.1):
+    - RCTTypeSafety (= 0.68.7)
+    - React-Codegen (= 0.68.7)
+    - React-Core/RCTSettingsHeaders (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - ReactCommon/turbomodule/core (= 0.68.7)
+  - React-RCTText (0.68.7):
+    - React-Core/RCTTextHeaders (= 0.68.7)
+  - React-RCTVibration (0.68.7):
     - RCT-Folly (= 2021.06.28.00-v2)
-    - React-Codegen (= 0.68.1)
-    - React-Core/RCTVibrationHeaders (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - ReactCommon/turbomodule/core (= 0.68.1)
-  - React-runtimeexecutor (0.68.1):
-    - React-jsi (= 0.68.1)
-  - ReactCommon/turbomodule/core (0.68.1):
+    - React-Codegen (= 0.68.7)
+    - React-Core/RCTVibrationHeaders (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - ReactCommon/turbomodule/core (= 0.68.7)
+  - React-runtimeexecutor (0.68.7):
+    - React-jsi (= 0.68.7)
+  - ReactCommon/turbomodule/core (0.68.7):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2021.06.28.00-v2)
-    - React-callinvoker (= 0.68.1)
-    - React-Core (= 0.68.1)
-    - React-cxxreact (= 0.68.1)
-    - React-jsi (= 0.68.1)
-    - React-logger (= 0.68.1)
-    - React-perflogger (= 0.68.1)
-  - SDWebImage (5.13.2):
-    - SDWebImage/Core (= 5.13.2)
-  - SDWebImage/Core (5.13.2)
-  - SwrveSDK (8.1.0):
+    - React-callinvoker (= 0.68.7)
+    - React-Core (= 0.68.7)
+    - React-cxxreact (= 0.68.7)
+    - React-jsi (= 0.68.7)
+    - React-logger (= 0.68.7)
+    - React-perflogger (= 0.68.7)
+  - SDWebImage (5.17.0):
+    - SDWebImage/Core (= 5.17.0)
+  - SDWebImage/Core (5.17.0)
+  - SwrveSDK (8.8.0):
     - SDWebImage (~> 5.0)
-    - SwrveSDKCommon (= 8.1.0)
-  - SwrveSDKCommon (8.1.0)
+    - SwrveSDKCommon (= 8.8.0)
+  - SwrveSDKCommon (8.8.0)
   - Yoga (1.14.0)
 
 DEPENDENCIES:
@@ -302,7 +302,7 @@ DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - FBReactNativeSpec (from `../node_modules/react-native/React/FBReactNativeSpec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
-  - OCMock (= 3.6)
+  - OCMock (= 3.8.1)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTRequired (from `../node_modules/react-native/Libraries/RCTRequired`)
   - RCTTypeSafety (from `../node_modules/react-native/Libraries/TypeSafety`)
@@ -410,42 +410,42 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   boost: a7c83b31436843459a1961bfd74b96033dc77234
   DoubleConversion: 831926d9b8bf8166fd87886c4abab286c2422662
-  FBLazyVector: 2c76493a346ef8cacf1f442926a39f805fffec1f
-  FBReactNativeSpec: 371350f24afa87b6aba606972ec959dcd4a95c9a
+  FBLazyVector: 63b89dc85804d5817261f56dc4cfb43a9b6d57f5
+  FBReactNativeSpec: 1fa200a9862d9369a53b6fddbbfcdc22bab24062
   fmt: ff9d55029c625d3757ed641535fd4a75fedc7ce9
   glog: 476ee3e89abb49e07f822b48323c51c57124b572
-  OCMock: 5ea90566be239f179ba766fd9fbae5885040b992
+  OCMock: 29f6e52085b4e7d9b075cbf03ed7c3112f82f934
   RCT-Folly: 4d8508a426467c48885f1151029bc15fa5d7b3b8
-  RCTRequired: 00581111c53531e39e3c6346ef0d2c0cf52a5a37
-  RCTTypeSafety: 07e03ee7800e7dd65cba8e52ad0c2edb06c96604
-  React: e61f4bf3c573d0c61c56b53dc3eb1d9daf0768a0
-  React-callinvoker: 047d47230bb6fd66827f8cb0bea4e944ffd1309b
-  React-Codegen: bb0403cde7374af091530e84e492589485aab480
-  React-Core: a4a3a8e10d004b08e013c3d0438259dd89a3894c
-  React-CoreModules: bb9f8bc36f1ae6d780b856927fa9d4aa01ccccc0
-  React-cxxreact: 7dd472aefb8629d6080cbb859240bafccd902704
-  React-jsi: b25808afe821b607d51c779bdd1717be8393b7ec
-  React-jsiexecutor: 4a4bae5671b064a2248a690cf75957669489d08c
-  React-jsinspector: 218a2503198ff28a085f8e16622a8d8f507c8019
-  React-logger: f79dd3cc0f9b44f5611c6c7862badd891a862cf8
-  react-native-swrve-plugin: a06f89e3ecc2b909d541d2691cafd2f124a2393c
-  React-perflogger: 30ab8d6db10e175626069e742eead3ebe8f24fd5
-  React-RCTActionSheet: 4b45da334a175b24dabe75f856b98fed3dfd6201
-  React-RCTAnimation: d6237386cb04500889877845b3e9e9291146bc2e
-  React-RCTBlob: bc9e2cd738c43bd2948e862e371402ef9584730a
-  React-RCTImage: 9f8cac465c6e5837007f59ade2a0a741016dd6a3
-  React-RCTLinking: 5073abb7d30cc0824b2172bd4582fc15bfc40510
-  React-RCTNetwork: 28ff94aa7d8fc117fc800b87dd80869a00d2bef3
-  React-RCTSettings: f27aa036f7270fe6ca43f8cdd1819e821fa429a0
-  React-RCTText: 7cb6f86fa7bc86f22f16333ad243b158e63b2a68
-  React-RCTVibration: 9e344c840176b0af9c84d5019eb4fed8b3c105a1
-  React-runtimeexecutor: 7285b499d0339104b2813a1f58ad1ada4adbd6c0
-  ReactCommon: bf2888a826ceedf54b99ad1b6182d1bc4a8a3984
-  SDWebImage: 72f86271a6f3139cc7e4a89220946489d4b9a866
-  SwrveSDK: e245c8de1ded893e7319a5308762fdf38c9bb18a
-  SwrveSDKCommon: e93ca3daef9f255716f83226390ca2b12e2eb162
-  Yoga: 17cd9a50243093b547c1e539c749928dd68152da
+  RCTRequired: 530916cd48c5f7cf1fc16966ad5ea01638ca4799
+  RCTTypeSafety: 5fb4cb3080efd582e5563c3e9a0e459fc51396c5
+  React: 097b19fbc7aecb3bd23de54b462d2051d7ca8a38
+  React-callinvoker: 4f118545cf884f0d8fce5bcd6e1847147ea9cc05
+  React-Codegen: 24e59be16f8ed24b3e49e5ff0738dad91988c760
+  React-Core: 0b464d0bec18dde90fa819c4be14dbcbdbf3077f
+  React-CoreModules: 9bb7d5d5530d474cf8514e2dc8274af82a0bcf2f
+  React-cxxreact: 027e192b8008ba5c200163ab6ded55d134c839d5
+  React-jsi: 9019a0a0b42e9eac6c1e8c251a8dffe65055a2f1
+  React-jsiexecutor: 7c0bd030a84f2ec446fb104b7735af2f5ed11eea
+  React-jsinspector: cab4d37ebde480f84c79ac89568abbf76b916c3e
+  React-logger: b75b80500ea80457b2cf169427d66de986cdcb29
+  react-native-swrve-plugin: 52e4738f58393eb966247c48dfcbebd7b2b9f301
+  React-perflogger: 44436b315d757100a53dfb1ab6b77c58cb646d7d
+  React-RCTActionSheet: 1888a229684762c40cc96c7ff4716f809655dc09
+  React-RCTAnimation: f05da175751867521d14b02ab4d3994a7b96f131
+  React-RCTBlob: 792b966e48d599383d7a0753f75e8f2ff71be1ce
+  React-RCTImage: 065cf66546f625295efd36bce3a1806a9b93399c
+  React-RCTLinking: 8246290c072bd2d1f336792038d7ec4b91f9847a
+  React-RCTNetwork: 6b2331c74684fae61b1ef38f4510fe5da3de3f3a
+  React-RCTSettings: 2898e15b249b085f8b8c7401cfab71983a2d40da
+  React-RCTText: bd1da1cd805e0765e3ba9089a9fd807d4860a901
+  React-RCTVibration: 2a4bf853281d4981ab471509102300d3c9e6c693
+  React-runtimeexecutor: 18932e685b4893be88d1efc18f5f8ca1c9cd39d8
+  ReactCommon: 29bb6fad3242e30e9d049bc9d592736fa3da9e50
+  SDWebImage: 750adf017a315a280c60fde706ab1e552a3ae4e9
+  SwrveSDK: 179e96e3b8fac0c5061d19b1a931a704ba50af2d
+  SwrveSDKCommon: 308a5559aa1182b145d4f4905db4cdf2e9a6278f
+  Yoga: 0bc4b37c3b8a345336ff601e2cf7d9704bab7e93
 
-PODFILE CHECKSUM: 361aa22a2fd5d8ccabfac1018e6089f86f2f3cf5
+PODFILE CHECKSUM: eb8f0d8e0f5e07238124551a1e1a682dc9c4d77c
 
-COCOAPODS: 1.11.3
+COCOAPODS: 1.12.1

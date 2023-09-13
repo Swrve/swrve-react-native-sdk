@@ -2,27 +2,19 @@ package com.swrve.reactnative;
 
 import android.app.Activity;
 
-import android.app.NotificationChannel;
 import android.content.Context;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import com.facebook.react.bridge.*;
-import com.swrve.reactnative.SwrvePluginModule;
-import com.swrve.sdk.ISwrve;
 import com.swrve.sdk.Swrve;
 import com.swrve.sdk.SwrveIAPRewards;
 import com.swrve.sdk.SwrveIdentityResponse;
-import com.swrve.sdk.SwrvePushNotificationListener;
-import com.swrve.sdk.SwrveSilentPushListener;
 import com.swrve.sdk.SwrveUserResourcesDiffListener;
 import com.swrve.sdk.SwrveUserResourcesListener;
 import com.swrve.sdk.SwrveRealTimeUserPropertiesListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
-import com.swrve.sdk.messaging.SwrveCampaignState;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
-import com.swrve.sdk.messaging.SwrveOrientation;
+import com.swrve.sdk.messaging.SwrveMessageButtonDetails;
+import com.swrve.sdk.messaging.SwrveMessageDetails;
 
 import static com.swrve.reactnative.SwrvePluginErrorCodes.*;
 
@@ -41,22 +33,18 @@ import org.mockito.stubbing.Answer;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import java.io.Console;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimeZone;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -426,6 +414,20 @@ public class SwrvePluginModuleTests {
     }
 
     @Test
+    public void testEmbeddedControlMessageImpressionSent() {
+
+        String cache = "{\"campaigns\": [{\"id\":551899,\"start_date\":1630510173000,\"end_date\":2145920400000,\"rules\":{\"delay_first_message\":180,\"dismiss_after_views\":99999,\"display_order\":\"random\",\"min_delay_between_messages\":60},\"message_center\":true,\"embedded_message\":{\"id\":547716,\"name\":\"Test Embedded Campaign\",\"data\":\"Hello this is a rendered embedded message.\",\"type\":\"other\",\"buttons\":[],\"version\":1,\"rules\":{},\"priority\":9999},\"subject\":\"\"}]}";
+        SwrvePluginModule module = getModule();
+
+        Mockito.doReturn(new Date()).when(swrve).getNow();
+        Mockito.doReturn(cache).when(swrve).getCachedData(any(), any());
+        Mockito.doReturn(new Date()).when(swrve).getInitialisedTime();
+
+        module.embeddedControlMessageImpressionEvent(551899);
+        Mockito.verify(swrve).embeddedControlMessageImpressionEvent(any(SwrveEmbeddedMessage.class));
+    }
+
+    @Test
     public void testPushBufferingWontSendYet() {
         SwrvePluginModule module = getModule();
         SwrvePluginModule.delegateHolder.onPushNotification(new JSONObject());
@@ -509,5 +511,70 @@ public class SwrvePluginModuleTests {
 
         module.stopTracking();
         verify(swrve).stopTracking();
+    }
+
+    @Test
+    public void tesInAppMessageMappingReturnsValidJSONWhenObjectHasNilValues() {
+        // Given
+        SwrvePluginEventEmitter eventEmitter = new SwrvePluginEventEmitter(reactApplicationContext);
+        SwrveMessageDetails messageDetails = Mockito.mock(SwrveMessageDetails.class);
+        Long longId = new Long(551899);
+        Mockito.doReturn(null).when(messageDetails).getCampaignSubject();
+        Mockito.doReturn(longId).when(messageDetails).getCampaignId();
+        Mockito.doReturn(longId).when(messageDetails).getVariantId();
+        Mockito.doReturn(null).when(messageDetails).getMessageName();
+
+        SwrveMessageButtonDetails buttonDetails = Mockito.mock(SwrveMessageButtonDetails.class);
+        Mockito.doReturn(null).when(buttonDetails).getButtonName();
+        ArrayList<SwrveMessageButtonDetails> list = new ArrayList<>();
+        list.add(buttonDetails);
+        Mockito.doReturn(list).when(messageDetails).getButtons();
+
+        try {
+            // when
+            JSONObject json = eventEmitter.messageDetailsToJson(messageDetails);
+            //then
+            assertThat(json).isNotNull();
+            assertEquals("", json.get("campaignSubject"));
+            assertEquals("", json.get("messageName"));
+            assertThat(json.getJSONArray("buttons").getJSONObject(0).getString("buttonName")).isEqualTo("");
+
+        } catch (Exception e) {
+            assertWithMessage("Fail the test as this exception should not be thrown");
+        }
+
+    }
+
+    @Test
+    public void tesInAppMessageMappingReturnsValidValues() {
+        // Given
+        SwrvePluginEventEmitter eventEmitter = new SwrvePluginEventEmitter(reactApplicationContext);
+        SwrveMessageDetails messageDetails = Mockito.mock(SwrveMessageDetails.class);
+        Long longId = new Long(551899);
+        Mockito.doReturn("campaignSubject").when(messageDetails).getCampaignSubject();
+        Mockito.doReturn(longId).when(messageDetails).getCampaignId();
+        Mockito.doReturn(longId).when(messageDetails).getVariantId();
+        Mockito.doReturn("messageName").when(messageDetails).getMessageName();
+
+        SwrveMessageButtonDetails buttonDetails = Mockito.mock(SwrveMessageButtonDetails.class);
+        Mockito.doReturn("buttonName").when(buttonDetails).getButtonName();
+        ArrayList<SwrveMessageButtonDetails> list = new ArrayList<>();
+        list.add(buttonDetails);
+        Mockito.doReturn(list).when(messageDetails).getButtons();
+
+        try {
+            // when
+            JSONObject json = eventEmitter.messageDetailsToJson(messageDetails);
+            //then
+            assertThat(json).isNotNull();
+
+            assertEquals("campaignSubject", json.get("campaignSubject"));
+            assertEquals("messageName", json.get("messageName"));
+            assertThat(json.getJSONArray("buttons").getJSONObject(0).getString("buttonName")).isEqualTo("buttonName");
+
+        } catch (Exception e) {
+            assertWithMessage("Fail the test as this exception should not be thrown");
+        }
+
     }
 }

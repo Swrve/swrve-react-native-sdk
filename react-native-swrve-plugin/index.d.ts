@@ -8,6 +8,9 @@ export type MessageCustomButtonPressedListener = (action: string, campaignName: 
 export type MessageDismissButtonPressedListener = (campaignSubject: string, buttonName: string, campaignName: string) => void;
 export type MessageClipboardButtonPressedListener = (processedText: string) => void;
 export type EmbeddedMessageCampaignListener = (embeddedMessage: Map, personalizationProperties?: Map) => void;
+export type EmbeddedCampaignListener = (embeddedMessage: Map, personalizationProperties: Map, isControl: boolean) => void;
+export type InAppMessageListener = (action: string, message: Map, selectedButton?: Map) => void;
+export type DeeplinkListener = (actionString: string) => void;
 
 export interface StringMap {
 	[key: string]: string;
@@ -28,16 +31,41 @@ export interface SwrveMessageListeners {
 	clipboardButtonPressedListener?: MessageClipboardButtonPressedListener;
 }
 
-export interface SwrveEmbeddedMessageListeners {
+export interface SwrveEmbeddedMessageCampaignListener {
 	embeddedMessageCampaignListener?: EmbeddedMessageCampaignListener
 }
+
+export interface SwrveEmbeddedCampaignListener {
+	embeddedCampaignListener?: EmbeddedCampaignListener
+}
+
+export interface SwrveInAppMessageListener {
+	inAppMessageListener?: InAppMessageListener
+}
+
+export interface SwrveDeepLinkListener {
+	deeplinkListener?: DeeplinkListener
+}
+
 
 /// Push and Resource and Campaign Listeners
 export function setListeners(
 	SwrveListeners?: SwrveListeners,
 	swrvePushListeners?: SwrvePushListeners,
 	SwrveMessageListeners?: SwrveMessageListeners,
-	SwrveEmbeddedMessageListeners?: SwrveEmbeddedMessageListeners
+	SwrveEmbeddedMessageCampaignListener?: SwrveEmbeddedMessageCampaignListener
+);
+
+export function setEmbeddedCampaignListener(
+	SwrveEmbeddedWithControldMessageListeners?: SwrveEmbeddedWithControldMessageListeners
+);
+
+export function setInAppMessageListener(
+	SwrveInAppMessageListener?: SwrveInAppMessageListener
+);
+
+export function setDeeplinkListener(
+	SwrveDeepLinkListener?: SwrveDeepLinkListener
 );
 
 export function start(userId: string);
@@ -132,6 +160,8 @@ export function removeMessageCenterCampaign(campaignId: number);
 export function markMessageCenterCampaignAsSeen(campaignId: number);
 
 export function markEmbeddedMessageCampaignAsSeen(campaignId: number);
+
+export function embeddedControlMessageImpressionEvent(campaignId: number);
 
 export function markEmbeddedMessageButtonAsPressed(campaignId: number, button: String);
 

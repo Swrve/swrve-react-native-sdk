@@ -11,7 +11,7 @@
     },
     "dependencies": {
         "react": "16.14.0",
-        "react-native": "0.68.1",
+        "react-native": "0.68.7",
         "react-native-swrve-plugin": "../../react-native-swrve-plugin"
     },
     "devDependencies": {

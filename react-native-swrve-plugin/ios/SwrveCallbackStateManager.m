@@ -2,8 +2,7 @@
 
 @implementation SwrveCallbackStateManager
 
-+ (instancetype)sharedInstance
-{
++ (instancetype)sharedInstance {
     static SwrveCallbackStateManager *sharedInstance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -12,11 +11,12 @@
     return sharedInstance;
 }
 
-- (instancetype)init
-{
+- (instancetype)init {
     self = [super init];
     if (self) {
         self.isListeningCustom = NO;
+        self.isListeningDeeplink = NO;
+        self.isListeningInAppMessage = NO;
     }
     return self;
 }

@@ -12,7 +12,7 @@ target 'UnitTests' do
   target 'UnitTestsTests' do
     inherit! :complete
     # Pods for testing
-    pod 'OCMock', '3.6'
+    pod 'OCMock', '~> 3.9.1'
   end
 
   # Enables Flipper.
@@ -31,6 +31,6 @@ target 'UnitTests-tvOS' do
   target 'UnitTests-tvOSTests' do
     inherit! :search_paths
     # Pods for testing
-    pod 'OCMock', '3.6'
+    pod 'OCMock', '~> 3.9.1'
   end
 end
