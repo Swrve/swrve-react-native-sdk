@@ -70,7 +70,7 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     final static String LOG_TAG = "SwrvePluginModule";
     static SwrveListenerDelegateHolder delegateHolder = new SwrveListenerDelegateHolder();
 
-    public static String SWRVE_PLUGIN_VERSION = "4.1.0";
+    public static String SWRVE_PLUGIN_VERSION = "4.1.1";
     private final String MODULE_NAME = "SwrvePlugin";
     private final ReactApplicationContext reactContext;
 
@@ -735,17 +735,19 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
         }
     }
 
-
     private static void setupDeeplinkListener(SwrveConfig config) {
         if (config.getSwrveDeeplinkListener() == null) {
-            config.setSwrveDeeplinkListener(new SwrveDeeplinkListener() {
-                @Override
-                public void handleDeeplink(Context context, String uri, Bundle extras) {
-                    delegateHolder.delegate.onDeeplinkDelegate(uri);
+            config.setSwrveDeeplinkListener((context, uriString, extras) -> {
+                if (delegateHolder.delegate != null) {
+                    delegateHolder.delegate.onDeeplinkDelegate(uriString);
+                } else {
+                    Log.w(LOG_TAG, "Unable to handle opening deeplink in react native as it may not be ready. Attempting to open deeplink directly.");
+                    SwrvePluginUtils.openDeepLink(context, uriString, extras);
                 }
             });
         }
     }
+
     private static SwrveInAppMessageConfig setupInAppMessageConfig(SwrveConfig config) {
         SwrveInAppMessageConfig.Builder inAppConfigBuilder = new SwrveInAppMessageConfig.Builder();
 

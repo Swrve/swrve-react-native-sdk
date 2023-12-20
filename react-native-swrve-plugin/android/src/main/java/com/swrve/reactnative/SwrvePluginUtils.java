@@ -1,6 +1,10 @@
 package com.swrve.reactnative;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
 import android.util.Log;
 
 import com.facebook.react.bridge.ReadableArray;
@@ -170,6 +174,21 @@ public class SwrvePluginUtils {
       }
     }
     return array;
+  }
+
+  protected static void openDeepLink(Context context, String uriString, Bundle extras) {
+    try {
+      Uri uri = Uri.parse(uriString);
+      Intent intent = new Intent(Intent.ACTION_VIEW).setData(uri);
+      if (extras != null) {
+        intent.putExtras(extras);
+      }
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+      context.startActivity(intent);
+    } catch (Exception ex) {
+      Log.e(LOG_TAG, "SwrvePlugin could not open deeplink:" + uriString, ex);
+    }
   }
 
 }
