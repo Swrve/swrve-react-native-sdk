@@ -70,7 +70,7 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     final static String LOG_TAG = "SwrvePluginModule";
     static SwrveListenerDelegateHolder delegateHolder = new SwrveListenerDelegateHolder();
 
-    public static String SWRVE_PLUGIN_VERSION = "4.1.1";
+    public static String SWRVE_PLUGIN_VERSION = "4.1.2";
     private final String MODULE_NAME = "SwrvePlugin";
     private final ReactApplicationContext reactContext;
 
