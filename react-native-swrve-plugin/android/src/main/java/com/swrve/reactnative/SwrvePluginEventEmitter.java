@@ -209,46 +209,40 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule
         }
     }
 
-    public void onMessageDetailDelegate(
-            SwrveInAppMessageListener.SwrveMessageAction action,
-            SwrveMessageDetails messageDetails,
-            SwrveMessageButtonDetails selectedButton
-    ) {
-        if (listeningInAppMessageListener == false) {
-            switch (action) {
-                case Dismiss:
-                    onDismissAction(messageDetails.getCampaignSubject(), selectedButton.getButtonName(), messageDetails.getMessageName());
-                    break;
+    public void onMessageDetailDelegate(SwrveInAppMessageListener.SwrveMessageAction action, SwrveMessageDetails messageDetails, SwrveMessageButtonDetails selectedButton) {
+        try {
+            if (!listeningInAppMessageListener) {
+                String selectedButtonName = selectedButton == null ? "os_back_button" : selectedButton.getButtonName(); // selectedButton can be null if user dismisses using hardware back button
+                String campaignSubject = messageDetails == null ? "" : messageDetails.getCampaignSubject();
+                String messageName = messageDetails == null ? "" : messageDetails.getMessageName();
+                String selectedButtonAction = selectedButton == null ? "" : selectedButton.getActionString();
+                switch (action) {
+                    case Dismiss:
+                        onDismissAction(campaignSubject, selectedButtonName, messageName);
+                        break;
                     case Custom:
-                        onCustomAction(selectedButton.getActionString(), messageDetails.getMessageName());
+                        onCustomAction(selectedButtonAction, messageName);
                         break;
                     case CopyToClipboard:
-                        onClipboardAction(selectedButton.getActionString());
+                        onClipboardAction(selectedButtonAction);
                         break;
                     default:
                         break;
                 }
-            return;
-        }
+                return;
+            }
 
-        try {
             WritableMap params = Arguments.createMap();
-
             params.putString(CALLBACK_KEY_MESSAGE_DETAIL_ACTION, action.toString());
-
             JSONObject json = messageDetailsToJson(messageDetails);
             params.putMap(CALLBACK_KEY_MESSAGE_DETAIL_MAP, SwrvePluginUtils.convertJsonToMap(json));
-
-            if(selectedButton != null) {
+            if (selectedButton != null) {
                 WritableMap buttonMap = SwrvePluginUtils.convertJsonToMap(buttonDetailsToJson(selectedButton));
                 params.putMap(CALLBACK_KEY_MESSAGE_DETAIL_SELECTED_BUTTON, buttonMap);
             }
-
-            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
-                    .emit(MESSAGE_DETAILS_DELEGATE_EVENT_NAME, params);
-
-            } catch (Exception e) {
-            Log.e(LOG_TAG, "Unable to  emit swrve message details triggered event", e);
+            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class).emit(MESSAGE_DETAILS_DELEGATE_EVENT_NAME, params);
+        } catch (Exception e) {
+            Log.e(LOG_TAG, "Error in onMessageDetailDelegate", e);
         }
     }
 
