@@ -1,26 +1,28 @@
 #import "SwrvePluginUtils.h"
+#import "SwrvePlugin.h"
 #import <SwrveSDK/SwrveSDK.h>
+#import <React/RCTVersion.h>
 
 @implementation SwrvePluginUtils
 
-+ (NSDictionary<NSString*, NSString*>*) toDictionaryJustStrings:(nonnull NSDictionary*)dictionary {
-    NSMutableDictionary<NSString*, NSString*>* outDict = [NSMutableDictionary dictionaryWithCapacity:dictionary.count];
-    
-    [dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
++ (NSDictionary<NSString *, NSString *> *)toDictionaryJustStrings:(nonnull NSDictionary *)dictionary {
+    NSMutableDictionary<NSString *, NSString *> *outDict = [NSMutableDictionary dictionaryWithCapacity:dictionary.count];
+
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(id _Nonnull key, id _Nonnull obj, BOOL *_Nonnull stop) {
         if ([obj isKindOfClass:NSString.class]) {
             [outDict setObject:obj forKey:key];
         } else if ([obj isKindOfClass:NSNumber.class]) {
-            [outDict setObject:((NSNumber*)obj).description forKey:key];
+            [outDict setObject:((NSNumber *) obj).description forKey:key];
         }
     }];
-    
+
     return outDict;
 }
 
 // Serialize an entire dictionary or serialize a key in the dic.
 // This method is used to serialize the just the "SwrveSilentPushPayloadKey" payload content.
 // So we return to JS layer just the expected payload to our custumer.
-+ (NSString*) serializeDictonaryToJson:(NSDictionary *)dic withKey:(nullable NSString *) key {
++ (NSString *)serializeDictonaryToJson:(NSDictionary *)dic withKey:(nullable NSString *)key {
     NSError *error;
     NSData *jsonData;
     if (key != nil) {
@@ -37,13 +39,48 @@
     return jsonString;
 }
 
-+ (NSError*) produceErrorFromException:(NSException *) exception {
++ (NSError *)produceErrorFromException:(NSException *)exception {
     NSMutableDictionary *info = [NSMutableDictionary dictionary];
     [info setValue:exception forKey:NSUnderlyingErrorKey];
     [info setValue:exception.userInfo forKey:NSDebugDescriptionErrorKey];
     [info setValue:(exception.reason ?: @"unknown reason") forKey:NSLocalizedFailureReasonErrorKey];
-    
+
     return [NSError errorWithDomain:exception.name code:0 userInfo:info];
+}
+
+- (void)sendSwrveUserUpdate {
+
+    NSString *newArchEnabled = @"false";
+    #ifdef RCT_NEW_ARCH_ENABLED
+        newArchEnabled = @"true";
+    #endif
+    NSDictionary *userUpdates = @{
+        @"swrve.react_native_plugin_version": @SWRVE_PLUGIN_VERSION,
+        @"swrve.react_native_version": [self reactNativeVersion],
+        @"swrve.react_native_new_arch_enabled": newArchEnabled
+    };
+    [SwrveSDK userUpdate:userUpdates];
+    [SwrveSDK sendQueuedEvents];
+}
+
+- (NSString *)reactNativeVersion {
+    NSMutableString *semanticVersion = [NSMutableString string];
+    NSDictionary *reactNativeVersion = RCTGetReactNativeVersion();
+    if (reactNativeVersion[RCTVersionMajor] &&
+            reactNativeVersion[RCTVersionMinor] &&
+            reactNativeVersion[RCTVersionPatch]) {
+        NSString *major = reactNativeVersion[RCTVersionMajor];
+        NSString *minor = reactNativeVersion[RCTVersionMinor];
+        NSString *patch = reactNativeVersion[RCTVersionPatch];
+        [semanticVersion appendFormat:@"%@.%@.%@", major, minor, patch];
+
+        if (reactNativeVersion[RCTVersionPrerelease] && ![reactNativeVersion[RCTVersionPrerelease] isKindOfClass:[NSNull class]]) {
+            [semanticVersion appendFormat:@"-%@", reactNativeVersion[RCTVersionPrerelease]];
+        }
+    } else {
+        [semanticVersion appendString:@"Unknown"];
+    }
+    return [semanticVersion copy];
 }
 
 @end

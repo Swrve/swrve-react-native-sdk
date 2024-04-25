@@ -38,7 +38,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.facebook.react:react-native:+'  // From node_modules
-    implementation 'com.swrve.sdk.android:swrve-geo:7.0.0' // Swrve Geo dependency
+    api 'com.facebook.react:react-native:+'  // From node_modules
+    api 'com.swrve.sdk.android:swrve-geo:7.0.0' // Swrve Geo dependency
 }
 

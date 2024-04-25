@@ -3,7 +3,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface SwrvePluginDelegateHandler : NSObject<SwrveInAppMessageDelegate, SwrveDeeplinkDelegate>
+@interface SwrvePluginDelegateHandler : NSObject <SwrveInAppMessageDelegate, SwrveDeeplinkDelegate>
 
 + (instancetype)sharedInstance;
 

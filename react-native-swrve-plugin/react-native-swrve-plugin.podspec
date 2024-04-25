@@ -14,14 +14,14 @@ Pod::Spec.new do |s|
   s.source_files = "ios/**/*.{h,m,swift}"
   s.public_header_files = "ios/**/*.h"
 
-  s.platforms    = { :ios => "10.0" }
+  s.platforms    = { :ios => "12.0" }
   s.requires_arc = true
 
   s.dependency "React-Core"
 # Use optimistic operator to get all minor versions up to (but excluding) the next major version. 
 # Do not add a second dot and number for a patch. Eg: 
-# Do something like "~> 8.0". 
-# DO NOT do something like "~> 8.0.0"
-  s.dependency "SwrveSDK", "~> 8.0"
+# Do something like "~> 9.0". 
+# DO NOT do something like "~> 9.0.0"
+  s.dependency "SwrveSDK", "~> 9.0"
 
 end

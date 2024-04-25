@@ -24,11 +24,11 @@
         "url": "https://github.com/Swrve/swrve-react-native-sdk/issues"
     },
     "peerDependencies": {
-        "react": "^16.8.1",
-        "react-native": ">=0.60.0-rc.0 <1.0.x"
+        "react": "*",
+        "react-native": "*"
     },
     "devDependencies": {
-        "react": "^16.9.0",
-        "react-native": "^0.68.7"
+        "react": "*",
+        "react-native": "^0.71.13"
     }
 }

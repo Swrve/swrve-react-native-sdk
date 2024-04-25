@@ -14,10 +14,10 @@ Pod::Spec.new do |s|
   s.source_files = "ios/**/*.{h,c,m,swift}"
   s.public_header_files = "ios/**/*.h"
 
-  s.platforms    = { :ios => "10.0" }
+  s.platforms    = { :ios => "12.0" }
   s.requires_arc = true
 
   s.dependency "React-Core"
   s.dependency "SwrveGeoSDK", "5.0.1"
-  s.dependency "SwrveSDKCommon", "~> 8.0"
+  s.dependency "SwrveSDKCommon", "~> 9.0"
 end

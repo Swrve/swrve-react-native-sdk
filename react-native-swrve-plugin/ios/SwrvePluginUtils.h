@@ -5,11 +5,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface SwrvePluginUtils : NSObject
 
-+ (NSDictionary<NSString*, NSString*>*) toDictionaryJustStrings:(nonnull NSDictionary*)dictionary;
++ (NSDictionary<NSString *, NSString *> *)toDictionaryJustStrings:(nonnull NSDictionary *)dictionary;
 
-+ (NSString*) serializeDictonaryToJson:(NSDictionary *)dic withKey:(nullable NSString *)key;
++ (NSString *)serializeDictonaryToJson:(NSDictionary *)dic withKey:(nullable NSString *)key;
 
-+ (NSError*) produceErrorFromException:(NSException *) exception;
++ (NSError *)produceErrorFromException:(NSException *)exception;
+
+- (void)sendSwrveUserUpdate;
 
 @end
 

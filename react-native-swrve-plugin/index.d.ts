@@ -4,10 +4,6 @@ export type InitMode = 'auto' | 'managed';
 export type AndroidPushImportance = 'none' | 'min' | 'low' | 'default' | 'max';
 export type PushListener = (payload: string) => void;
 export type UserResourcesListener = () => void;
-export type MessageCustomButtonPressedListener = (action: string, campaignName: string) => void;
-export type MessageDismissButtonPressedListener = (campaignSubject: string, buttonName: string, campaignName: string) => void;
-export type MessageClipboardButtonPressedListener = (processedText: string) => void;
-export type EmbeddedMessageCampaignListener = (embeddedMessage: Map, personalizationProperties?: Map) => void;
 export type EmbeddedCampaignListener = (embeddedMessage: Map, personalizationProperties: Map, isControl: boolean) => void;
 export type InAppMessageListener = (action: string, message: Map, selectedButton?: Map) => void;
 export type DeeplinkListener = (actionString: string) => void;
@@ -25,16 +21,6 @@ export interface SwrveListeners {
 	userResourcesUpdatedListener?: UserResourcesListener;
 }
 
-export interface SwrveMessageListeners {
-	customButtonPressedListener?: MessageCustomButtonPressedListener;
-	dismissButtonPressedListener?: MessageDismissButtonPressedListener;
-	clipboardButtonPressedListener?: MessageClipboardButtonPressedListener;
-}
-
-export interface SwrveEmbeddedMessageCampaignListener {
-	embeddedMessageCampaignListener?: EmbeddedMessageCampaignListener
-}
-
 export interface SwrveEmbeddedCampaignListener {
 	embeddedCampaignListener?: EmbeddedCampaignListener
 }
@@ -47,17 +33,14 @@ export interface SwrveDeepLinkListener {
 	deeplinkListener?: DeeplinkListener
 }
 
-
 /// Push and Resource and Campaign Listeners
 export function setListeners(
 	SwrveListeners?: SwrveListeners,
-	swrvePushListeners?: SwrvePushListeners,
-	SwrveMessageListeners?: SwrveMessageListeners,
-	SwrveEmbeddedMessageCampaignListener?: SwrveEmbeddedMessageCampaignListener
+	swrvePushListeners?: SwrvePushListeners
 );
 
 export function setEmbeddedCampaignListener(
-	SwrveEmbeddedWithControldMessageListeners?: SwrveEmbeddedWithControldMessageListeners
+	SwrveEmbeddedCampaignListener?: SwrveEmbeddedCampaignListener
 );
 
 export function setInAppMessageListener(

@@ -14,9 +14,7 @@
 - (instancetype)init {
     self = [super init];
     if (self) {
-        self.isListeningCustom = NO;
         self.isListeningDeeplink = NO;
-        self.isListeningInAppMessage = NO;
     }
     return self;
 }

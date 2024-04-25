@@ -9,17 +9,15 @@
 #import <SwrveSDK/SwrveSDK.h>
 #import <SwrveSDK/SwrveCampaign.h>
 
-#define SWRVE_PLUGIN_VERSION "4.1.3"
-
 @interface SwrvePlugin ()
 
-@property (nonatomic, strong, nonnull) Swrve* swrveInstanceReference;
+@property(nonatomic, strong, nonnull) Swrve *swrveInstanceReference;
 
 @end
 
 @implementation SwrvePlugin
 
-SwrveConfig* _config;
+SwrveConfig *_config;
 
 NSString *const SwrveSilentPushIdentifierKey = @"_sp";
 NSString *const SwrveSilentPushPayloadKey = @"_s.SilentPayload";
@@ -30,14 +28,14 @@ RCT_EXPORT_MODULE()
 
 #pragma mark Developer Native Interface
 
-+ (void)initWithAppID:(int)appId apiKey:(NSString*)apiKey config:(SwrveConfig*)config {
++ (void)initWithAppID:(int)appId apiKey:(NSString *)apiKey config:(SwrveConfig *)config {
     if (config == nil) {
         config = [SwrveConfig new];
     }
-    
+
     _config = config;
 
-    if (config.inAppMessageConfig == nil){
+    if (config.inAppMessageConfig == nil) {
         config.inAppMessageConfig = [SwrveInAppMessageConfig new];
     }
 
@@ -45,42 +43,34 @@ RCT_EXPORT_MODULE()
         config.embeddedMessageConfig = [SwrveEmbeddedMessageConfig new];
     }
 
-    // Set callbacks
-    if([config.inAppMessageConfig dismissButtonCallback] == nil) {
-        [config.inAppMessageConfig setDismissButtonCallback:^(NSString *campaignSubject, NSString *buttonName, NSString* campaignName) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_DISMISS_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_DISMISS_BUTTON_CAMPAIGN_SUBJECT: campaignSubject, CALLBACK_KEY_DISMISS_BUTTON_NAME: buttonName, CALLBACK_KEY_DISMISS_CAMPAIGN_NAME: campaignName}];
+    if ([config.embeddedMessageConfig embeddedCallback] == nil) {
+        [config.embeddedMessageConfig setEmbeddedCallback:^(SwrveEmbeddedMessage *message, NSDictionary *personalizationProperties, bool isControl) {
+            NSString *isControlAsString = isControl ? @"YES" : @"NO";
+            if (SwrvePluginPushHandler.sharedInstance.shouldBufferEmbeddedEvents) {
+                NSLog(@"SwrvePlugin - embedded callback was triggered but need to buffer until receiver is ready.", nil);
+                [SwrvePluginPushHandler.sharedInstance bufferEmbeddedCallbackWithMessage:message
+                                                               personalizationProperties:personalizationProperties
+                                                                               isControl:isControlAsString];
+            } else {
+                [[NSNotificationCenter defaultCenter] postNotificationName:EMBEDDED_CALLBACK_EVENT_NAME object:self userInfo:@{
+                        CALLBACK_KEY_EMBEDDED_MESSAGE_MAP: message,
+                        CALLBACK_KEY_EMBEDDED_MESSAGE_PERSONALIZATION_PROPERTIES_MAP: personalizationProperties,
+                        CALLBACK_KEY_EMBEDDED_CONTROL_ACTION: isControlAsString}
+                ];
+            }
         }];
     }
 
-   if([config.inAppMessageConfig customButtonCallback] == nil) {
-       [config.inAppMessageConfig setCustomButtonCallback:^(NSString *action, NSString* campaignName) {
-           [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_CUSTOM_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_CUSTOM_BUTTON_ACTION: action, CALLBACK_KEY_CUSTOM_BUTTON_ACTION_CAMPAIGN_NAME: campaignName}];
-           [SwrvePlugin handleCustom:action];
-       }];
-   }
-
-    if([config.inAppMessageConfig clipboardButtonCallback] == nil) {
-        [config.inAppMessageConfig setClipboardButtonCallback:^(NSString *processedText) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:MESSAGE_CALLBACK_CLIPBOARD_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_CLIPBOARD_BUTTON_PROCESSED_TEXT: processedText}];
-        }];
-    }
-
-    if ([config.embeddedMessageConfig embeddedMessageCallback] == nil) {
-        [config.embeddedMessageConfig setEmbeddedMessageCallbackWithPersonalization:^(SwrveEmbeddedMessage *message, NSDictionary *personalizationProperties) {
-            [[NSNotificationCenter defaultCenter] postNotificationName:EMBEDDED_MESSAGE_CALLBACK_EVENT_NAME object:self userInfo:@{CALLBACK_KEY_EMBEDDED_MESSAGE_MAP: message, CALLBACK_KEY_EMBEDDED_MESSAGE_PERSONALIZATION_PROPERTIES_MAP: personalizationProperties}];
-        }];
-    }
-    
     // Set deeplink delegate handler
     if (config.deeplinkDelegate == nil) {
-        [config setDeeplinkDelegate: SwrvePluginDelegateHandler.sharedInstance];
+        [config setDeeplinkDelegate:SwrvePluginDelegateHandler.sharedInstance];
     }
-    
+
     // Setting the delegate to recieve inApp message detail
     if (config.inAppMessageConfig.inAppMessageDelegate == nil) {
-        [config.inAppMessageConfig setInAppMessageDelegate: SwrvePluginDelegateHandler.sharedInstance];
+        [config.inAppMessageConfig setInAppMessageDelegate:SwrvePluginDelegateHandler.sharedInstance];
     }
-    
+
     if (config.pushEnabled) {
         config.pushResponseDelegate = SwrvePluginPushHandler.sharedInstance;
     }
@@ -95,7 +85,7 @@ RCT_EXPORT_MODULE()
     //Ensure we start the state manager for this moment
     [SwrveCallbackStateManager sharedInstance];
 
-    [SwrvePlugin sendPluginVersion];
+    [[SwrvePluginUtils new] sendSwrveUserUpdate];
 }
 
 + (void)handleDeeplink:(NSURL *)url {
@@ -111,35 +101,28 @@ RCT_EXPORT_MODULE()
     BOOL handled = [SwrveSDK didReceiveRemoteNotification:userInfo withBackgroundCompletionHandler:completionHandler];
 
     if (handled) {
-       if ([userInfo objectForKey:SwrveSilentPushPayloadKey]) {
-           NSString *json = [SwrvePluginUtils serializeDictonaryToJson:userInfo withKey:SwrveSilentPushPayloadKey];
-           if (json) {
-               [[NSNotificationCenter defaultCenter] postNotificationName:SILENT_PUSH_EVENT_NAME object:self userInfo:@{PUSH_EVENT_PAYLOAD: json}];
-           }
-       } else {
-           NSString *json = [SwrvePluginUtils serializeDictonaryToJson:userInfo withKey:nil];
-           if (json) {
-               [[NSNotificationCenter defaultCenter] postNotificationName:PUSH_EVENT_NAME object:self userInfo:@{PUSH_EVENT_PAYLOAD: json}];
-           }
-       }
-   }
-    return handled;
-}
-
-+ (void) sendPluginVersion {
-    if ([SwrveSDK started]) {
-        [SwrveSDK userUpdate:[[NSDictionary alloc] initWithObjectsAndKeys:@SWRVE_PLUGIN_VERSION, @"swrve.react_native_plugin_version", nil]];
-        [SwrveSDK sendQueuedEvents];
+        if ([userInfo objectForKey:SwrveSilentPushPayloadKey]) {
+            NSString *json = [SwrvePluginUtils serializeDictonaryToJson:userInfo withKey:SwrveSilentPushPayloadKey];
+            if (json) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:SILENT_PUSH_EVENT_NAME object:self userInfo:@{PUSH_EVENT_PAYLOAD: json}];
+            }
+        } else {
+            NSString *json = [SwrvePluginUtils serializeDictonaryToJson:userInfo withKey:nil];
+            if (json) {
+                [[NSNotificationCenter defaultCenter] postNotificationName:PUSH_EVENT_NAME object:self userInfo:@{PUSH_EVENT_PAYLOAD: json}];
+            }
+        }
     }
+    return handled;
 }
 
 #pragma mark SDK lifecycle
 
-- (void) setSwrveInstance:(Swrve*)swrveInstance {
+- (void)setSwrveInstance:(Swrve *)swrveInstance {
     self.swrveInstanceReference = swrveInstance;
 }
 
-- (Swrve*) swrveInstance {
+- (Swrve *)swrveInstance {
     if (self.swrveInstanceReference) {
         return self.swrveInstanceReference;
     } else {
@@ -156,17 +139,13 @@ RCT_REMAP_METHOD(start,
 
     if (userId == nil || userId.length == 0) {
         [self.swrveInstance start];
-        // Need to use dispatch_after or SDK will not be ready to send.
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            [SwrvePlugin sendPluginVersion];
-        });
     } else {
         [self.swrveInstance startWithUserId:userId];
-        // Need to use dispatch_after or SDK will not be ready to send.
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-            [SwrvePlugin sendPluginVersion];
-        });
     }
+    // Need to use dispatch_after or SDK will not be ready to send.
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 3 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        [[SwrvePluginUtils new] sendSwrveUserUpdate];
+    });
 }
 
 RCT_EXPORT_METHOD(stopTracking) {
@@ -186,17 +165,15 @@ RCT_REMAP_METHOD(identify,
     NSLog(@"SwrvePlugin - identify %@", userIdentity);
 
     [self.swrveInstance identify:userIdentity
-             onSuccess:^(NSString * _Nonnull status, NSString * _Nonnull swrveUserId)
-        {
-            NSLog(@"SwrvePlugin - identify - success %@", swrveUserId);
-            resolve(swrveUserId);
-        }
-               onError:^(NSInteger httpCode, NSString * _Nonnull errorMessage)
-        {
-            NSLog(@"SwrvePlugin - identify - error %@", errorMessage);
-            reject(swrveResponseCode((int)httpCode), errorMessage, generalSwrveError(httpCode));
-        }
-     ];
+                       onSuccess:^(NSString *_Nonnull status, NSString *_Nonnull swrveUserId) {
+                           NSLog(@"SwrvePlugin - identify - success %@", swrveUserId);
+                           resolve(swrveUserId);
+                       }
+                         onError:^(NSInteger httpCode, NSString *_Nonnull errorMessage) {
+                             NSLog(@"SwrvePlugin - identify - error %@", errorMessage);
+                             reject(swrveResponseCode((int) httpCode), errorMessage, generalSwrveError(httpCode));
+                         }
+    ];
 }
 
 RCT_REMAP_METHOD(event,
@@ -205,7 +182,7 @@ RCT_REMAP_METHOD(event,
     NSLog(@"SwrvePlugin - event %@ %@", eventName, eventPayload);
 
     if (eventPayload != nil && eventPayload.count > 0) {
-        NSDictionary* stringsDict = [SwrvePluginUtils toDictionaryJustStrings:eventPayload];
+        NSDictionary *stringsDict = [SwrvePluginUtils toDictionaryJustStrings:eventPayload];
         [self.swrveInstance event:eventName payload:stringsDict];
     } else {
         [self.swrveInstance event:eventName];
@@ -223,8 +200,8 @@ RCT_REMAP_METHOD(userUpdate,
                  userUpdateWithattributes:(nonnull NSDictionary*)attributes) {
     NSLog(@"SwrvePlugin - userUpdate %@", attributes);
 
-    NSDictionary* stringsDict = [SwrvePluginUtils toDictionaryJustStrings:attributes];
-    [self.swrveInstance userUpdate: stringsDict];
+    NSDictionary *stringsDict = [SwrvePluginUtils toDictionaryJustStrings:attributes];
+    [self.swrveInstance userUpdate:stringsDict];
 }
 
 RCT_REMAP_METHOD(userUpdateDate,
@@ -258,7 +235,7 @@ RCT_REMAP_METHOD(purchase,
                  quantity:(NSInteger)quantity
                  cost:(NSInteger)cost)
 {
-    [self.swrveInstance purchaseItem:itemName currency:currency cost:(int)cost quantity:(int)quantity];
+    [self.swrveInstance purchaseItem:itemName currency:currency cost:(int) cost quantity:(int) quantity];
 }
 
 RCT_REMAP_METHOD(unvalidatedIap,
@@ -277,7 +254,7 @@ RCT_REMAP_METHOD(unvalidatedIapWithReward,
                  quantity:(int)quantity
                  rewardMap:(nonnull NSDictionary*)rewardMap)
 {
-    SwrveIAPRewards* reward = [[SwrveIAPRewards alloc] init];
+    SwrveIAPRewards *reward = [[SwrveIAPRewards alloc] init];
 
     NSArray *items = [rewardMap objectForKey:@"items"];
 
@@ -302,7 +279,7 @@ RCT_REMAP_METHOD(getApiKey, getApiKeyWithResolver:(RCTPromiseResolveBlock)resolv
     @try {
         NSString *apiKey = [self.swrveInstance apiKey];
         resolve(apiKey);
-    } @catch ( NSException *ex ) {
+    } @catch (NSException *ex) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
@@ -312,7 +289,7 @@ RCT_REMAP_METHOD(getUserId, getUserIdWithResolver:(RCTPromiseResolveBlock)resolv
     @try {
         NSString *userId = [self.swrveInstance userID];
         resolve(userId);
-    } @catch ( NSException *ex ) {
+    } @catch (NSException *ex) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
@@ -322,7 +299,7 @@ RCT_REMAP_METHOD(getExternalUserId, getExternalUserIdWithResolver:(RCTPromiseRes
     @try {
         NSString *externalUserId = [self.swrveInstance externalUserId];
         resolve(externalUserId);
-    } @catch ( NSException *ex ) {
+    } @catch (NSException *ex) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
@@ -332,7 +309,7 @@ RCT_REMAP_METHOD(isStarted, isStartedWithResolver:(RCTPromiseResolveBlock)resolv
     @try {
         BOOL isStarted = [self.swrveInstance started];
         resolve(@(isStarted));
-    } @catch ( NSException *ex ) {
+    } @catch (NSException *ex) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
@@ -343,7 +320,7 @@ RCT_REMAP_METHOD(getUserResources, getUserResourcesWithResolver:(RCTPromiseResol
         [self.swrveInstance userResources:^(NSDictionary *resources, NSString *resourcesAsJSON) {
             resolve(resources);
         }];
-    } @catch ( NSException *ex ) {
+    } @catch (NSException *ex) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
@@ -352,7 +329,7 @@ RCT_REMAP_METHOD(getUserResources, getUserResourcesWithResolver:(RCTPromiseResol
 RCT_REMAP_METHOD(getUserResourcesDiff, getUserResourcesDiffWithResolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     @try {
         [self.swrveInstance userResourcesDiffWithListener:^(NSDictionary *oldResourcesValues, NSDictionary *newResourcesValues, NSString *resourcesAsJSON, BOOL fromServer, NSError *error) {
-            NSMutableDictionary* userResourcesDiff = [NSMutableDictionary new];
+            NSMutableDictionary *userResourcesDiff = [NSMutableDictionary new];
             [userResourcesDiff setObject:oldResourcesValues forKey:@"oldResourcesValues"];
             [userResourcesDiff setObject:newResourcesValues forKey:@"newResourcesValues"];
             [userResourcesDiff setObject:[NSNumber numberWithBool:fromServer] forKey:@"fromServer"];
@@ -360,7 +337,7 @@ RCT_REMAP_METHOD(getUserResourcesDiff, getUserResourcesDiffWithResolver:(RCTProm
 
             resolve(userResourcesDiff);
         }];
-    } @catch ( NSException *ex ) {
+    } @catch (NSException *ex) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
@@ -383,7 +360,7 @@ RCT_REMAP_METHOD(getMessageCenterCampaigns, getMessageCenterCampaignsWithPersona
         }
 
         resolve(messageAsArray);
-    } @catch ( NSException *ex ) {
+    } @catch (NSException *ex) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
@@ -398,7 +375,7 @@ RCT_REMAP_METHOD(getMessageCenterCampaign, getMessageCenterCampaignWithId:(NSInt
         } else {
             reject(@"SwrvePlugin", @"Unable to find campaign", nil);
         }
-    } @catch ( NSException *ex ) {
+    } @catch (NSException *ex) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
@@ -441,7 +418,7 @@ RCT_REMAP_METHOD(getRealTimeUserProperties, getRealTimeUserPropertiesWithResolve
         [self.swrveInstance realTimeUserProperties:^(NSDictionary *properties) {
             resolve(properties);
         }];
-    } @catch ( NSException *ex ) {
+    } @catch (NSException *ex) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
@@ -480,7 +457,7 @@ RCT_REMAP_METHOD(getPersonalizedText, getPersonalizedTextWithText:(NSString *)te
     @try {
         NSString *personalizedText = [self.swrveInstance personalizeText:text withPersonalization:personalizationProperties];
         resolve(personalizedText);
-    } @catch ( NSException *ex ) {
+    } @catch (NSException *ex) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
@@ -496,7 +473,7 @@ RCT_REMAP_METHOD(getPersonalizedEmbeddedMessageData, getPersonalizedEmbeddedMess
         }
 
         resolve(personalizedEmbeddedMessageData);
-    } @catch ( NSException *ex ) {
+    } @catch (NSException *ex) {
         NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
         reject(ex.name, ex.reason, error);
     }
@@ -513,45 +490,24 @@ RCT_EXPORT_METHOD(startedListening) {
     [SwrvePluginPushHandler.sharedInstance flushBufferedEvents];
 }
 
-RCT_EXPORT_METHOD(stoppedListening) {
-    SwrvePluginPushHandler.sharedInstance.shouldBufferEvents = YES;
+RCT_EXPORT_METHOD(startedEmbeddedListening) {
+    NSLog(@"SwrvePlugin - startedEmbeddedListening", nil);
+    SwrvePluginPushHandler.sharedInstance.shouldBufferEmbeddedEvents = NO;
+    [SwrvePluginPushHandler.sharedInstance flushBufferedEmbeddedEvents];
 }
 
-RCT_EXPORT_METHOD(listeningCustom) {
-    SwrveCallbackStateManager.sharedInstance.isListeningCustom = YES;
+RCT_EXPORT_METHOD(stoppedListening) {
+    SwrvePluginPushHandler.sharedInstance.shouldBufferEvents = YES;
 }
 
 RCT_EXPORT_METHOD(listeningDeeplink) {
     SwrveCallbackStateManager.sharedInstance.isListeningDeeplink = YES;
 }
 
-RCT_EXPORT_METHOD(listeningInAppMessageListener) {
-    SwrveCallbackStateManager.sharedInstance.isListeningInAppMessage = YES;
-}
-
-RCT_EXPORT_METHOD(listeningEmbeddedCallbackWithControl) {
-    if ([_config.embeddedMessageConfig embeddedCallback] == nil) {
-        [_config.embeddedMessageConfig setEmbeddedCallback:^(SwrveEmbeddedMessage *message, NSDictionary *personalizationProperties, bool isControl) {
-            NSString* isControlAsString = isControl ? @"YES": @"NO";
-            [[NSNotificationCenter defaultCenter] postNotificationName:EMBEDDED_CALLBACK_EVENT_NAME object:self userInfo:@{
-                CALLBACK_KEY_EMBEDDED_MESSAGE_MAP: message,
-                CALLBACK_KEY_EMBEDDED_MESSAGE_PERSONALIZATION_PROPERTIES_MAP: personalizationProperties,
-                CALLBACK_KEY_EMBEDDED_CONTROL_ACTION: isControlAsString}
-            ];
-        }];
-    }
-}
-
 #pragma mark - helper methods
 
-+ (void) handleCustom:(NSString *) nonProcessedAction {
-    if (SwrveCallbackStateManager.sharedInstance.isListeningCustom == NO) {
-        [SwrvePlugin handleAction:nonProcessedAction];
-    }
-}
-
-+ (void) handleAction:(NSString *) nonProcessedAction {
-    if(nonProcessedAction != nil) {
++ (void)handleAction:(NSString *)nonProcessedAction {
+    if (nonProcessedAction != nil) {
         NSURL *url = [NSURL URLWithString:nonProcessedAction];
         if (url != nil) {
             if (@available(iOS 10.0, *)) {
@@ -576,7 +532,7 @@ RCT_EXPORT_METHOD(listeningEmbeddedCallbackWithControl) {
     }
 }
 
-- (SwrveCampaign *) findMessageCenterCampaignbyID:(NSInteger) campaignId {
+- (SwrveCampaign *)findMessageCenterCampaignbyID:(NSInteger)campaignId {
     NSArray<SwrveCampaign *> *campaigns = [self.swrveInstance messageCenterCampaigns];
     SwrveCampaign *canditiate;
 
@@ -589,12 +545,11 @@ RCT_EXPORT_METHOD(listeningEmbeddedCallbackWithControl) {
     return canditiate;
 }
 
-- (NSMutableDictionary *) mapSwrveCampaignToMessageCenterJSON:(SwrveCampaign *) campaign {
+- (NSMutableDictionary *)mapSwrveCampaignToMessageCenterJSON:(SwrveCampaign *)campaign {
     NSMutableDictionary *campaignDictionary = [[NSMutableDictionary alloc] init];
-    
+
     [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[campaign ID]] forKey:@"ID"];
     [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[campaign maxImpressions]] forKey:@"maxImpressions"];
-    [campaignDictionary setValue:[campaign subject] forKey:@"subject"];
     [campaignDictionary setValue:[campaign name] forKey:@"name"];
     [campaignDictionary setValue:[campaign priority] forKey:@"priority"];
     [campaignDictionary setValue:[NSNumber numberWithUnsignedInteger:[[campaign downloadDate] timeIntervalSince1970]] forKey:@"downloadDate"];
@@ -608,7 +563,7 @@ RCT_EXPORT_METHOD(listeningEmbeddedCallbackWithControl) {
     NSUInteger statusNumber = [[stateDictionary objectForKey:@"status"] integerValue];
     [stateDictionary setObject:[self translateCampaignStatus:statusNumber] forKey:@"status"];
     [campaignDictionary setObject:stateDictionary forKey:@"state"];
-    
+
     if ([campaign messageCenterDetails] != nil) {
         SwrveMessageCenterDetails *campaignMessageCenterDetails = [campaign messageCenterDetails];
 
@@ -652,7 +607,7 @@ RCT_EXPORT_METHOD(listeningEmbeddedCallbackWithControl) {
     return campaignDictionary;
 }
 
-- (NSMutableDictionary *) getCache {
+- (NSMutableDictionary *)getCache {
     NSString *userId = [self.swrveInstance userID];
     NSData *dataFile = [NSData dataWithContentsOfFile:[SwrveLocalStorage campaignsFilePathForUserId:userId]];
     NSMutableDictionary *dictionary = [NSMutableDictionary new];
@@ -660,8 +615,8 @@ RCT_EXPORT_METHOD(listeningEmbeddedCallbackWithControl) {
     if (dataFile != nil) {
         NSError *error;
         dictionary = [NSJSONSerialization JSONObjectWithData:dataFile
-                                                   options:NSJSONReadingMutableContainers
-                                                     error:&error];
+                                                     options:NSJSONReadingMutableContainers
+                                                       error:&error];
         if (error) {
             NSLog(@"SwrvePlugin - Unable to read cache error: %@", [error localizedDescription]);
             return nil;
@@ -679,11 +634,10 @@ RCT_EXPORT_METHOD(listeningEmbeddedCallbackWithControl) {
     return nil;
 }
 
-- (SwrveEmbeddedCampaign *) findEmbeddedCampaignByID:(NSInteger) campaignId {
+- (SwrveEmbeddedCampaign *)findEmbeddedCampaignByID:(NSInteger)campaignId {
     NSMutableDictionary *cache = [self getCache];
     NSArray *campaigns = [cache objectForKey:@"campaigns"];
-    for (NSDictionary *campaign in campaigns)
-    {
+    for (NSDictionary *campaign in campaigns) {
         if (campaignId == [[campaign valueForKey:@"id"] integerValue]) {
             SwrveEmbeddedCampaign *embeddedCampaign = [[SwrveEmbeddedCampaign alloc] initAtTime:[NSDate date] fromDictionary:campaign forController:nil];
             return embeddedCampaign;
@@ -692,8 +646,8 @@ RCT_EXPORT_METHOD(listeningEmbeddedCallbackWithControl) {
     return nil;
 }
 
-- (NSString *)translateCampaignStatus:(NSUInteger) status {
-    switch (status){
+- (NSString *)translateCampaignStatus:(NSUInteger)status {
+    switch (status) {
         case SWRVE_CAMPAIGN_STATUS_UNSEEN:
             return @"Unseen";
             break;

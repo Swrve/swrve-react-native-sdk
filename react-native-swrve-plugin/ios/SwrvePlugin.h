@@ -1,13 +1,19 @@
 #import <React/RCTBridgeModule.h>
 #import <SwrveSDK/SwrveSDK.h>
 
+#define SWRVE_PLUGIN_VERSION "5.0.0"
+
 @protocol SwrvePluginNativeProtocol <NSObject>
 
 + (void)initWithAppID:(int)appId apiKey:(nonnull NSString *)apiKey config:(nullable SwrveConfig *)config;
+
 + (void)handleDeeplink:(nonnull NSURL *)url;
+
 + (void)handleDeferredDeeplink:(nonnull NSURL *)url;
-+ (BOOL)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo
-    withBackgroundCompletionHandler:(void (^)(UIBackgroundFetchResult, NSDictionary *))completionHandler API_AVAILABLE(ios(7.0));
+
++ (BOOL)            application:(UIApplication *)application 
+   didReceiveRemoteNotification:(NSDictionary *)userInfo
+withBackgroundCompletionHandler:(void (^)(UIBackgroundFetchResult, NSDictionary *))completionHandler API_AVAILABLE(ios(7.0));
 
 @end
 
@@ -17,15 +23,15 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property(nonatomic, strong, nonnull) Swrve *swrveInstance;
 
-+ (void) handleAction:(NSString *) nonProcessedAction;
++ (void)handleAction:(NSString *)nonProcessedAction;
 
 - (void)startWithUserId:(NSString *)userId;
 
 - (void)stopTracking;
 
 - (void)identifyWithUserIdentity:(nonnull NSString *)userIdentity
-                            resolver:(RCTPromiseResolveBlock)resolve
-                            rejecter:(RCTPromiseRejectBlock)reject;
+                        resolver:(RCTPromiseResolveBlock)resolve
+                        rejecter:(RCTPromiseRejectBlock)reject;
 
 - (void)userUpdateWithattributes:(nonnull NSDictionary *)attributes;
 
@@ -74,13 +80,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)getUserResourcesDiffWithResolver:(RCTPromiseResolveBlock)resolve
                                 rejecter:(RCTPromiseRejectBlock)reject;
 
-- (void)getMessageCenterCampaignsWithPersonalization:(NSDictionary * _Nullable) personalization
-                                     resolver:(RCTPromiseResolveBlock)resolve
-                                     rejecter:(RCTPromiseRejectBlock)reject;
+- (void)getMessageCenterCampaignsWithPersonalization:(NSDictionary *_Nullable)personalization
+                                            resolver:(RCTPromiseResolveBlock)resolve
+                                            rejecter:(RCTPromiseRejectBlock)reject;
 
-- (void)getMessageCenterCampaignWithId:(NSInteger)campaignID andPersonalization:(NSDictionary * _Nullable)personalizationProperties
-                                     resolver:(RCTPromiseResolveBlock)resolve
-                                     rejecter:(RCTPromiseRejectBlock)reject;
+- (void)getMessageCenterCampaignWithId:(NSInteger)campaignID andPersonalization:(NSDictionary *_Nullable)personalizationProperties
+                              resolver:(RCTPromiseResolveBlock)resolve
+                              rejecter:(RCTPromiseRejectBlock)reject;
 
 - (void)getPersonalizedTextWithText:(NSString *)text andPersonalization:(NSDictionary *)personalizationProperties
                            resolver:(RCTPromiseResolveBlock)resolve
@@ -90,7 +96,7 @@ NS_ASSUME_NONNULL_BEGIN
                                         resolver:(RCTPromiseResolveBlock)resolve
                                         rejecter:(RCTPromiseRejectBlock)reject;
 
-- (void)showMessageCenterCampaignWithId:(NSInteger)campaignId withPersonalization:(NSDictionary * _Nullable) personalization;
+- (void)showMessageCenterCampaignWithId:(NSInteger)campaignId withPersonalization:(NSDictionary *_Nullable)personalization;
 
 - (void)removeMessageCenterCampaignWithId:(NSInteger)campaignId;
 
@@ -109,6 +115,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)startedListening;
 
 - (void)stoppedListening;
+
+- (void)startedEmbeddedListening;
 
 @end
 
