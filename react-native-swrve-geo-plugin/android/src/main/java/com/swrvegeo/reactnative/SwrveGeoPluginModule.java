@@ -12,7 +12,6 @@ import com.swrve.sdk.geo.SwrveGeoSDK;
 public class SwrveGeoPluginModule extends ReactContextBaseJavaModule {
 
     final static String LOG_TAG = "SwrveGeoPluginModule";
-    public static String SWRVE_GEO_PLUGIN_VERSION = "3.1.0";
     private final String MODULE_NAME = "SwrveGeoPlugin";
     private final ReactApplicationContext reactContext;
 

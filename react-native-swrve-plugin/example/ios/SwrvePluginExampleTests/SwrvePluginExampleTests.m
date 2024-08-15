@@ -79,7 +79,7 @@
 
     NSDictionary *userUpdates = @{
             @"swrve.react_native_version": @"0.73.4",
-            @"swrve.react_native_plugin_version": @"5.0.0",
+            @"swrve.react_native_plugin_version": @"5.0.1",
             @"swrve.react_native_new_arch_enabled": @"false"
     };
     OCMVerify([self.swrve userUpdate:userUpdates]);

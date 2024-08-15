@@ -1,7 +1,7 @@
 #import <React/RCTBridgeModule.h>
 #import <SwrveSDK/SwrveSDK.h>
 
-#define SWRVE_PLUGIN_VERSION "5.0.0"
+#define SWRVE_PLUGIN_VERSION "5.0.1"
 
 @protocol SwrvePluginNativeProtocol <NSObject>
 

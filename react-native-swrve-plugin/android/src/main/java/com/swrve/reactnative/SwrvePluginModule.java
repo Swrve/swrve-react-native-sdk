@@ -48,7 +48,7 @@ import java.util.TimeZone;
 
 public class SwrvePluginModule extends ReactContextBaseJavaModule {
 
-    public static String SWRVE_PLUGIN_VERSION = "5.0.0";
+    public static String SWRVE_PLUGIN_VERSION = "5.0.1";
     private final ReactApplicationContext reactContext;
     private final SwrvePluginEventEmitter eventEmitter;
 
