@@ -15,6 +15,7 @@
     self = [super init];
     if (self) {
         self.isListeningDeeplink = NO;
+        self.isListeningPushInboxUpdate = NO;
     }
     return self;
 }

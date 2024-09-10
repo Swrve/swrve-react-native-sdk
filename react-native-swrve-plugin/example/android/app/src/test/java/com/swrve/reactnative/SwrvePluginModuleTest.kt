@@ -28,6 +28,7 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyBoolean
 import org.mockito.ArgumentMatchers.anyMap
+import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mock
 import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.doAnswer
@@ -380,7 +381,7 @@ class SwrvePluginModuleTest : SwrveBaseMockitoTest() {
         doReturn(cache).`when`<Swrve>(mockSwrve).getCachedData(any(), any())
         doReturn(Date()).`when`<Swrve>(mockSwrve).initialisedTime
         spyPluginModule?.markEmbeddedMessageButtonAsPressed(551899, "Button 1")
-        verify<Swrve>(mockSwrve).embeddedMessageButtonWasPressed(any(SwrveEmbeddedMessage::class.java), ArgumentMatchers.eq("Button 1"))
+        verify<Swrve>(mockSwrve).embeddedMessageButtonWasPressed(any(SwrveEmbeddedMessage::class.java), eq("Button 1"))
     }
 
     @Test
@@ -389,7 +390,7 @@ class SwrvePluginModuleTest : SwrveBaseMockitoTest() {
         fbMap.putString("test", "value")
         val data = "test data"
         spyPluginModule?.getPersonalizedText(data, fbMap, mockPromise)
-        verify<Swrve>(mockSwrve).getPersonalizedText(ArgumentMatchers.eq(data), anyMap())
+        verify<Swrve>(mockSwrve).getPersonalizedText(eq(data), anyMap())
     }
 
     @Test
@@ -411,7 +412,7 @@ class SwrvePluginModuleTest : SwrveBaseMockitoTest() {
     }
 
     @Test
-    fun tesInAppMessageMappingReturnsValidJSONWhenObjectHasNilValues() {
+    fun testInAppMessageMappingReturnsValidJSONWhenObjectHasNilValues() {
         // Given
         val eventEmitter = SwrvePluginEventEmitter(mockReactApplicationContext)
         val messageDetails = mock(SwrveMessageDetails::class.java)
@@ -433,7 +434,7 @@ class SwrvePluginModuleTest : SwrveBaseMockitoTest() {
     }
 
     @Test
-    fun tesInAppMessageMappingReturnsValidValues() {
+    fun testInAppMessageMappingReturnsValidValues() {
         // Given
         val eventEmitter = SwrvePluginEventEmitter(mockReactApplicationContext)
         val messageDetails = mock(SwrveMessageDetails::class.java)
@@ -452,5 +453,32 @@ class SwrvePluginModuleTest : SwrveBaseMockitoTest() {
         assertEquals("campaignSubject", json["campaignSubject"])
         assertEquals("messageName", json["messageName"])
         Truth.assertThat(json.getJSONArray("buttons").getJSONObject(0).getString("buttonName")).isEqualTo("buttonName")
+    }
+
+    @Test
+    fun testPushInboxGetMessages() {
+        spyPluginModule?.getPushInboxMessages(mockPromise)
+        verify<Swrve>(mockSwrve, atLeastOnce()).pushInboxMessages
+    }
+
+    @Test
+    fun testPushInboxMessageEngage() {
+        val messageId = 3614565938492356600
+        spyPluginModule?.engagePushInboxMessage(messageId.toString(), mockPromise)
+        verify<Swrve>(mockSwrve, atLeastOnce()).engagePushInboxMessage(eq(messageId), any())
+    }
+
+    @Test
+    fun testPushInboxMessageRead() {
+        val messageId = 3614565938492356600
+        spyPluginModule?.readPushInboxMessage(messageId.toString(), mockPromise)
+        verify<Swrve>(mockSwrve, atLeastOnce()).readPushInboxMessage(eq(messageId), any())
+    }
+
+    @Test
+    fun testPushInboxMessageDelete() {
+        val messageId = 3614565938492356600
+        spyPluginModule?.deletePushInboxMessage(messageId.toString(), mockPromise)
+        verify<Swrve>(mockSwrve, atLeastOnce()).deletePushInboxMessage(eq(messageId), any())
     }
 }

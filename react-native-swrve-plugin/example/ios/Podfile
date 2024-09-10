@@ -29,6 +29,11 @@ flipper_config = FlipperConfiguration.enabled
 # end
 
 target 'SwrvePluginExample' do
+
+  # uncomment to test locally
+  # pod 'SwrveSDK', :path => '../../../../../ios-sdk/public', :development_pod => true # TODO comment this line so it uses the remote pod instead
+  # pod 'SwrveSDKCommon', :path => '../../../../../ios-sdk/public', :development_pod => true # TODO comment this line so it uses the remote pod instead
+
   config = use_native_modules!
 
   use_react_native!(

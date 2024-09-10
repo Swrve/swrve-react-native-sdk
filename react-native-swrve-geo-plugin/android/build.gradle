@@ -39,6 +39,6 @@ repositories {
 
 dependencies {
     api 'com.facebook.react:react-native:+'  // From node_modules
-    api 'com.swrve.sdk.android:swrve-geo:7.+' // Swrve Geo SDK dependency
+    api('com.swrve.sdk.android:swrve-geo:7.+') // Swrve Geo SDK dependency
 }
 

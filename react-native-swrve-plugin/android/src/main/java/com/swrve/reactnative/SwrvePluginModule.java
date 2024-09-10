@@ -7,6 +7,7 @@ import static com.swrve.reactnative.SwrvePluginErrorCodes.swrveResponseCode;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -30,6 +31,9 @@ import com.swrve.sdk.SwrveUserResourcesDiffListener;
 import com.swrve.sdk.SwrveUserResourcesListener;
 import com.swrve.sdk.messaging.SwrveBaseCampaign;
 import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
+import com.swrve.sdk.SwrvePushInboxMessage;
+import com.swrve.sdk.SwrvePushInboxListener;
+import com.swrve.sdk.SwrvePushInboxListenerResult;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,6 +43,7 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +53,7 @@ import java.util.TimeZone;
 
 public class SwrvePluginModule extends ReactContextBaseJavaModule {
 
-    public static String SWRVE_PLUGIN_VERSION = "5.0.1";
+    public static String SWRVE_PLUGIN_VERSION = "5.1.0";
     private final ReactApplicationContext reactContext;
     private final SwrvePluginEventEmitter eventEmitter;
 
@@ -455,6 +460,92 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
+    public void getPushInboxMessages(final Promise promise) {
+        try {
+        
+            List<SwrvePushInboxMessage> messages = SwrveSDK.getPushInboxMessages();
+
+            //convert to an array, for relay to typescript
+            WritableArray pushInboxArray = SwrvePluginUtils.createNativeArray();
+
+            for (SwrvePushInboxMessage message : messages) {
+
+                WritableMap map = Arguments.createMap();
+                map.putString("messageId",Long.toString(message.getMessageId()));
+                map.putString("variantId",Long.toString(message.getVariantId()));
+                map.putDouble("endDate",message.getEndDate());
+                map.putDouble("sentDate",message.getSentDate());
+                map.putMap("customerJson", SwrvePluginUtils.convertJsonToMap(message.getCustomerJson()));
+                map.putString("state",message.getState().toString());
+
+                pushInboxArray.pushMap(map);
+            }
+            
+            promise.resolve(pushInboxArray);
+
+        } catch (Exception runtime) {
+            promise.reject(EXCEPTION, runtime.toString());
+        }
+    }
+
+    @ReactMethod
+    public void engagePushInboxMessage(String messageId, final Promise promise) {
+        try {
+            SwrveSDK.engagePushInboxMessage(Long.parseLong(messageId), new SwrvePushInboxListener() {
+                @Override
+                public void onComplete(long messageId, SwrvePushInboxListenerResult result) {
+                    try {
+                        JSONObject resultJSON = mapSwrvePushInboxListenerResultToJson(messageId, result);
+                        promise.resolve(SwrvePluginUtils.convertJsonToMap(resultJSON));
+                    } catch (Exception runtime) {
+                        promise.reject(EXCEPTION, runtime.toString());
+                    }
+                }
+            });
+        } catch (Exception runtime) {
+            promise.reject(EXCEPTION, runtime.toString());
+        }
+    }
+
+    @ReactMethod
+    public void readPushInboxMessage(String messageId, final Promise promise) {
+        try {
+            SwrveSDK.readPushInboxMessage(Long.parseLong(messageId), new SwrvePushInboxListener() {
+                @Override
+                public void onComplete(long messageId, SwrvePushInboxListenerResult result) {
+                    try {
+                        JSONObject resultJSON = mapSwrvePushInboxListenerResultToJson(messageId, result);
+                        promise.resolve(SwrvePluginUtils.convertJsonToMap(resultJSON));
+                    } catch (Exception runtime) {
+                        promise.reject(EXCEPTION, runtime.toString());
+                    }
+                }
+            });
+        } catch (Exception runtime) {
+            promise.reject(EXCEPTION, runtime.toString());
+        }
+    }
+
+    @ReactMethod
+    public void deletePushInboxMessage(String messageId, final Promise promise) {
+        try {
+            SwrveSDK.deletePushInboxMessage(Long.parseLong(messageId), new SwrvePushInboxListener() {
+                @Override
+                public void onComplete(long messageId, SwrvePushInboxListenerResult result) {
+                    try {
+                        JSONObject resultJSON = mapSwrvePushInboxListenerResultToJson(messageId, result);
+                        promise.resolve(SwrvePluginUtils.convertJsonToMap(resultJSON));
+                    } catch (Exception runtime) {
+                        promise.reject(EXCEPTION, runtime.toString());
+                    }
+                }
+            });
+        } catch (Exception runtime) {
+            promise.reject(EXCEPTION, runtime.toString());
+        }
+    }
+
+    @ReactMethod
     public void startedListening() {
         SwrveListeners.getInstance().setShouldBufferEvents(false);
         SwrveListeners.getInstance().flushBufferedEvents(reactContext);
@@ -475,6 +566,11 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void listeningDeeplink() {
         eventEmitter.setListeningDeeplink(true);
+    }
+
+    @ReactMethod
+    public void listeningPushInboxUpdate() {
+        eventEmitter.setListeningPushInboxUpdate(true);
     }
 
     // Private Methods
@@ -537,6 +633,15 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
             campaignJSON.put("messageCenterDetails", messageCentreJSON);
         }
         return campaignJSON;
+    }
+
+    private JSONObject mapSwrvePushInboxListenerResultToJson(long messageId, SwrvePushInboxListenerResult result) throws Exception {
+        JSONObject resultJSON = new JSONObject();
+        resultJSON.put("messageId", Long.toString(messageId));
+        resultJSON.put("resultCode", result.getResultCode().name());
+        resultJSON.put("errorMessage", result.getErrorMessage());
+        resultJSON.put("httpResponseCode", result.getHttpResponseCode());
+        return resultJSON;
     }
 
     private SwrveBaseCampaign findMessageCenterCampaignbyID(int identifier) {

@@ -7,6 +7,11 @@ export type UserResourcesListener = () => void;
 export type EmbeddedCampaignListener = (embeddedMessage: Map, personalizationProperties: Map, isControl: boolean) => void;
 export type InAppMessageListener = (action: string, message: Map, selectedButton?: Map) => void;
 export type DeeplinkListener = (actionString: string) => void;
+export type PushInboxUpdatedListener = () => void;
+
+export interface SwrvePushInboxListener {
+	onComplete? : (messageId: Long, result: SwrvePushInboxListenerResult) => void;
+}
 
 export interface StringMap {
 	[key: string]: string;
@@ -31,6 +36,10 @@ export interface SwrveInAppMessageListener {
 
 export interface SwrveDeepLinkListener {
 	deeplinkListener?: DeeplinkListener
+}
+
+export interface SwrvePushInboxUpdateListener {
+	pushInboxUpdateListener?: PushInboxUpdateListener
 }
 
 /// Push and Resource and Campaign Listeners
@@ -149,3 +158,39 @@ export function embeddedControlMessageImpressionEvent(campaignId: number);
 export function markEmbeddedMessageButtonAsPressed(campaignId: number, button: String);
 
 export function stopTracking();
+
+export interface SwrvePushInboxMessage {
+	messageId: bigint;
+	variantId: bigint;
+	endDate: bigint;
+	sentDate: bigint;
+	customerJson: string;
+	state: SwrvePushInboxMessageState;
+}
+
+export interface SwrvePushInboxResult {
+	resultCode: SwrvePushInboxResultCode;
+	errorMessage: string;
+	httpResponseCode: int;
+}
+
+export const enum SwrvePushInboxMessageState {
+	READ = "READ",
+	UNREAD = "UNREAD"
+}
+
+export const enum SwrvePushInboxMessageState {
+	SUCCESS = "SUCCESS",
+	ERROR_UNKNOWN = "ERROR_UNKNOWN",
+	ERROR = "ERROR"
+}
+
+export function setPushInboxUpdateListener(
+	SwrvePushInboxUpdateListener?: SwrvePushInboxUpdateListener
+);
+
+export function getPushInboxMessages(): Promise<Array<SwrvePushInboxMessage>>;
+
+export function engagePushInboxMessage(messageId: number): Promise<SwrvePushInboxResult>;
+export function readPushInboxMessage(messageId: number): Promise<SwrvePushInboxResult>;
+export function deletePushInboxMessage(messageId: number): Promise<SwrvePushInboxResult>;

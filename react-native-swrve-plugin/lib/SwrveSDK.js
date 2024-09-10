@@ -19,6 +19,7 @@ class SwrveSDK {
     static EMBEDDED_CALLBACK_EVENT_NAME = 'SwrveEmbeddedCallback';
     static MESSAGE_DETAILS_DELEGATE_EVENT_NAME = 'SwrveMessageDetailsDelegate';
     static DEEPLINK_DELEGATE_EVENT_NAME = 'SwrveMessageDeeplinkDelegate';
+    static PUSHINBOX_UPDATE_EVENT_NAME = 'SwrvePushInboxUpdate'; 
     
     Notifications = {
         // Notification types
@@ -32,6 +33,7 @@ class SwrveSDK {
     _embeddedCampaignListener = null;
     _inAppMessageListener = null;
     _deeplinkListener = null;
+    _pushInboxUpdateListener = null;
 
     constructor(listener) {
         this._eventEmitter = new NativeEventEmitter(NativeModules.SwrvePluginEventEmitter);
@@ -66,7 +68,7 @@ class SwrveSDK {
                         }
                     }
                 );
-            }
+            }            
         }
 
         if (pushListeners) {
@@ -174,7 +176,31 @@ class SwrveSDK {
                 );
             }
         }
+    }
 
+    setPushInboxUpdateListener(pushInboxUpdateListeners) {
+        if (this._eventHandlers.pushInboxUpdateListener) {
+            this._eventHandlers.pushInboxUpdateListener.remove();
+        }
+
+        if (pushInboxUpdateListeners !== null) {
+            this._pushInboxUpdateListener = pushInboxUpdateListeners.pushInboxUpdateListener;
+
+            if (pushInboxUpdateListeners.pushInboxUpdateListener) {
+
+                SwrvePlugin.listeningPushInboxUpdate();
+
+                this._eventHandlers.pushInboxUpdateListener = this._eventEmitter.addListener(
+                    SwrveSDK.PUSHINBOX_UPDATE_EVENT_NAME,
+                    (event) => {
+                        if (this._pushInboxUpdateListener) {
+                            console.log('SwrveSDK - pushInboxUpdateListener');
+                            this._pushInboxUpdateListener();
+                        }
+                    }
+                );
+            }
+        }
     }
 
     start(userId) {
@@ -295,6 +321,22 @@ class SwrveSDK {
 
     async stopTracking() {
         return SwrvePlugin.stopTracking();
+    }
+
+    async getPushInboxMessages() {
+        return SwrvePlugin.getPushInboxMessages();
+    }
+
+    async engagePushInboxMessage(messageId) {
+        return SwrvePlugin.engagePushInboxMessage(messageId);
+    }
+
+    async readPushInboxMessage(messageId) {
+        return SwrvePlugin.readPushInboxMessage(messageId);
+    }
+
+    async deletePushInboxMessage(messageId) {
+        return SwrvePlugin.deletePushInboxMessage(messageId);
     }
 }
 

@@ -1,7 +1,7 @@
 #import <React/RCTBridgeModule.h>
 #import <SwrveSDK/SwrveSDK.h>
 
-#define SWRVE_PLUGIN_VERSION "5.0.1"
+#define SWRVE_PLUGIN_VERSION "5.1.0"
 
 @protocol SwrvePluginNativeProtocol <NSObject>
 
@@ -117,6 +117,14 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)stoppedListening;
 
 - (void)startedEmbeddedListening;
+
+- (void)getPushInboxMessagesWithResolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
+
+- (void)engagePushInboxMessageWithMessageId:(NSString *)messageId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
+
+- (void)readPushInboxMessageWithMessageId:(NSString *)messageId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
+
+- (void)deletePushInboxMessageWithMessageId:(NSString *)messageId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
 
 @end
 

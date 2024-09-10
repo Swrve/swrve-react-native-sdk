@@ -9,6 +9,71 @@
 #import <SwrveSDK/SwrveSDK.h>
 #import <SwrveSDK/SwrveCampaign.h>
 
+#if __has_include(<SwrveSDK/SwrveSDK-Swift.h>)
+#import <SwrveSDK/SwrveSDK-Swift.h>
+#elif __has_include("SwrveSDK-Swift.h")
+#import "SwrveSDK-Swift.h"
+#endif
+
+@interface SwrvePushInboxDelegateHandler : NSObject <SwrvePushInboxDelegate>
+
+@property (nonatomic, copy) RCTPromiseResolveBlock resolve;
+@property (nonatomic, copy) RCTPromiseRejectBlock reject;
+
+- (instancetype)initWithResolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
+
+@end
+
+@implementation SwrvePushInboxDelegateHandler
+
+- (instancetype)initWithResolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    self = [super init];
+    if (self) {
+        _resolve = [resolve copy];
+        _reject = [reject copy];
+    }
+    return self;
+}
+
+- (void)onComplete:(UInt64) messageId result:(SwrvePushInboxResult *)result {
+ 
+    if (result != nil) {
+        NSString *resultCode = @"";
+        if (result.resultCode == SwrvePushInboxResultCodeSUCCESS) {
+            resultCode = @"SUCCESS";
+        } else if (result.resultCode == SwrvePushInboxResultCodeERROR_UNKNOWN) {
+            resultCode = @"ERROR_UNKNOWN";
+        } else if (result.resultCode == SwrvePushInboxResultCodeERROR) {
+            resultCode = @"ERROR";
+        }
+        NSDictionary *resultDictionary = @{
+            @"messageId": [[NSNumber numberWithUnsignedLongLong: messageId] stringValue],
+            @"resultCode": resultCode,
+            @"errorMessage": result.errorMessage,
+            @"httpResponseCode": @(result.httpResponseCode)
+        };
+        self.resolve(resultDictionary);
+    } else {
+        self.reject(EXCEPTION, @"No result provided", generalSwrveError(0));
+    }
+}
+
+@end
+
+@interface SwrvePushInboxUpdateHandler : NSObject <SwrvePushInboxUpdateDelegate>
+
+    - (void)messagesUpdated;
+
+@end
+
+@implementation SwrvePushInboxUpdateHandler
+
+    - (void)messagesUpdated {
+        [[NSNotificationCenter defaultCenter] postNotificationName:PUSHINBOX_UPDATE_EVENT_NAME object:self userInfo:nil];
+    }
+
+@end
+
 @interface SwrvePlugin ()
 
 @property(nonatomic, strong, nonnull) Swrve *swrveInstanceReference;
@@ -18,6 +83,7 @@
 @implementation SwrvePlugin
 
 SwrveConfig *_config;
+SwrvePushInboxUpdateHandler *_pushInboxUpdateHandler;
 
 NSString *const SwrveSilentPushIdentifierKey = @"_sp";
 NSString *const SwrveSilentPushPayloadKey = @"_s.SilentPayload";
@@ -82,6 +148,10 @@ RCT_EXPORT_MODULE()
 
     [SwrveSDK sharedInstanceWithAppID:appId apiKey:apiKey config:config];
 
+    //Link the PushInboxUpdateListener to handler that sends the event
+    _pushInboxUpdateHandler = [[SwrvePushInboxUpdateHandler alloc] init];
+    [SwrveSDK pushInboxUpdateListener:_pushInboxUpdateHandler];
+    
     //Ensure we start the state manager for this moment
     [SwrveCallbackStateManager sharedInstance];
 
@@ -504,6 +574,56 @@ RCT_EXPORT_METHOD(listeningDeeplink) {
     SwrveCallbackStateManager.sharedInstance.isListeningDeeplink = YES;
 }
 
+RCT_EXPORT_METHOD(listeningPushInboxUpdate) {
+    SwrveCallbackStateManager.sharedInstance.isListeningPushInboxUpdate = YES;
+}
+
+RCT_REMAP_METHOD(getPushInboxMessages, getPushInboxMessagesWithResolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+    @try {
+        NSArray *pushInboxMessages = [self.swrveInstance pushInboxMessages];
+        NSMutableArray *pushInboxMessagesAsArray = [[NSMutableArray alloc] init];
+        for (SwrvePushInboxMessage *pushInboxMessage in pushInboxMessages) {
+            NSMutableDictionary *pushInboxMessageDictionary = [self mapSwrvePushInboxMessageToJSON:pushInboxMessage];
+            [pushInboxMessagesAsArray addObject:pushInboxMessageDictionary];
+        }
+        resolve([pushInboxMessagesAsArray copy]);
+    } @catch (NSException *ex) {
+        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
+        reject(ex.name, ex.reason, error);
+    }
+}
+
+RCT_REMAP_METHOD(engagePushInboxMessage, engagePushInboxMessageWithMessageId:(NSString *)messageId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+    @try {
+        SwrvePushInboxDelegateHandler *handler = [[SwrvePushInboxDelegateHandler alloc] initWithResolver:resolve rejecter:reject];
+        [self.swrveInstance engagePushInboxMessage:[messageId longLongValue] listener:handler];
+    } @catch (NSException *ex) {
+        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
+        reject(ex.name, ex.reason, error);
+    }
+}
+
+RCT_REMAP_METHOD(readPushInboxMessage, readPushInboxMessageWithMessageId:(NSString *)messageId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+    @try {
+        SwrvePushInboxDelegateHandler *handler = [[SwrvePushInboxDelegateHandler alloc] initWithResolver:resolve rejecter:reject];
+        [self.swrveInstance readPushInboxMessage:[messageId longLongValue] listener:handler];
+    } @catch (NSException *ex) {
+        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
+        reject(ex.name, ex.reason, error);
+    }
+}
+
+RCT_REMAP_METHOD(deletePushInboxMessage, deletePushInboxMessageWithMessageId:(NSString *)messageId resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+    @try {
+        SwrvePushInboxDelegateHandler *handler = [[SwrvePushInboxDelegateHandler alloc] initWithResolver:resolve rejecter:reject];
+        [self.swrveInstance deletePushInboxMessage:[messageId longLongValue] listener:handler];
+    } @catch (NSException *ex) {
+        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
+        reject(ex.name, ex.reason, error);
+    }
+}
+
+
 #pragma mark - helper methods
 
 + (void)handleAction:(NSString *)nonProcessedAction {
@@ -605,6 +725,21 @@ RCT_EXPORT_METHOD(listeningDeeplink) {
         [campaignDictionary setObject:campaignMessageCenterDetailsDictionary forKey:@"messageCenterDetails"];
     }
     return campaignDictionary;
+}
+
+- (NSMutableDictionary *)mapSwrvePushInboxMessageToJSON:(SwrvePushInboxMessage *)pushInboxMessage {
+    NSMutableDictionary *pushInboxMessageDictionary = [[NSMutableDictionary alloc] init];
+    [pushInboxMessageDictionary setValue:[[NSNumber numberWithUnsignedLongLong:[pushInboxMessage messageId]] stringValue] forKey:@"messageId"];
+    [pushInboxMessageDictionary setValue:[[NSNumber numberWithUnsignedLongLong:[pushInboxMessage variantId]] stringValue] forKey:@"variantId"];
+    [pushInboxMessageDictionary setValue:[NSNumber numberWithUnsignedInteger:[pushInboxMessage endDate]] forKey:@"endDate"];
+    [pushInboxMessageDictionary setValue:[NSNumber numberWithUnsignedInteger:[pushInboxMessage sentDate]] forKey:@"sentDate"];
+    [pushInboxMessageDictionary setObject:[pushInboxMessage customerJson] forKey:@"customerJson"];
+    if([pushInboxMessage state] == SwrvePushInboxMessageStateUNREAD) {
+        [pushInboxMessageDictionary setValue:@"UNREAD" forKey:@"state"];
+    } else if([pushInboxMessage state] == SwrvePushInboxMessageStateREAD){
+        [pushInboxMessageDictionary setValue:@"READ" forKey:@"state"];
+    }
+    return pushInboxMessageDictionary;
 }
 
 - (NSMutableDictionary *)getCache {

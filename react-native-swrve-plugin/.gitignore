@@ -36,6 +36,7 @@ local.properties
 node_modules/
 npm-debug.log
 yarn-error.log
+yarn.lock
 
 # BUCK
 buck-out/
@@ -58,3 +59,7 @@ buck-out/
 
 # Expo
 .expo/*
+
+example/ios/Podfile.lock
+example/ios/SwrvePluginExample.xcworkspace/*
+example/ios/.xcode*

@@ -1,4 +1,5 @@
 #import "SwrvePluginEventEmitter.h"
+#import "SwrveCallbackStateManager.h"
 #import <SwrveSDK/SwrveEmbeddedMessage.h>
 #import <SwrveSDK/SwrveMessageDetails.h>
 #import <SwrveSDK/SwrveButtonActions.h>
@@ -36,6 +37,7 @@ NSString *const RESOURCES_UPDATED_EVENT_NAME = @"SwrveUserResourcesUpdated";
 NSString *const EMBEDDED_CALLBACK_EVENT_NAME = @"SwrveEmbeddedCallback";
 NSString *const MESSAGE_DETAILS_DELEGATE_EVENT_NAME = @"SwrveMessageDetailsDelegate";
 NSString *const DEEPLINK_DELEGATE_EVENT_NAME = @"SwrveMessageDeeplinkDelegate";
+NSString *const PUSHINBOX_UPDATE_EVENT_NAME = @"SwrvePushInboxUpdate";
 
 NSString *const MODULE_NAME = @"SwrvePluginEventEmitter";
 
@@ -48,7 +50,8 @@ RCT_EXPORT_MODULE();
             RESOURCES_UPDATED_EVENT_NAME,
             EMBEDDED_CALLBACK_EVENT_NAME,
             MESSAGE_DETAILS_DELEGATE_EVENT_NAME,
-            DEEPLINK_DELEGATE_EVENT_NAME
+            DEEPLINK_DELEGATE_EVENT_NAME,
+            PUSHINBOX_UPDATE_EVENT_NAME
     ];
 }
 
@@ -82,6 +85,10 @@ RCT_EXPORT_MODULE();
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(onDeeplinkDelegate:)
                                                      name:DEEPLINK_DELEGATE_EVENT_NAME object:nil];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(onPushInboxDelegate:)
+                                                     name:PUSHINBOX_UPDATE_EVENT_NAME object:nil];
 
 
         NSLog(@"SwrvePlugin - SwrvePluginEventEmitter init");
@@ -166,6 +173,12 @@ RCT_EXPORT_MODULE();
         [self sendEventWithName:DEEPLINK_DELEGATE_EVENT_NAME body:@{
                 CALLBACK_KEY_DEEPLINK_ACTION_STRING: actionString
         }];
+    }
+}
+
+- (void)onPushInboxDelegate:(NSNotification *)notification {
+    if (self.hasListeners && SwrveCallbackStateManager.sharedInstance.isListeningDeeplink == YES) {
+        [self sendEventWithName:PUSHINBOX_UPDATE_EVENT_NAME body:@{}];
     }
 }
 

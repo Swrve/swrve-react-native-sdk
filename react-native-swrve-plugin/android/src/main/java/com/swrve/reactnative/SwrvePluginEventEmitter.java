@@ -42,8 +42,10 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule {
     private final String EMBEDDED_CALLBACK_EVENT_NAME = "SwrveEmbeddedCallback";
     private final String MESSAGE_DETAILS_DELEGATE_EVENT_NAME = "SwrveMessageDetailsDelegate";
     private final String DEEPLINK_DELEGATE_EVENT_NAME = "SwrveMessageDeeplinkDelegate";
+    private final String PUSHINBOX_UPDATE_EVENT_NAME = "SwrvePushInboxUpdate";
 
     private boolean listeningDeeplink = false;
+    private boolean listeningPushInboxUpdate = false;
     private final ReactApplicationContext reactContext;
 
     SwrvePluginEventEmitter(ReactApplicationContext reactContext) {
@@ -143,6 +145,21 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule {
         }
     }
 
+    protected void onPushInboxUpdate() {
+        SwrveLogger.v("SwrvePlugin: onPushInboxUpdate");
+        if (!listeningPushInboxUpdate) {
+            return;
+        }
+
+        try {
+            WritableMap params = Arguments.createMap();
+            reactContext.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+                    .emit(PUSHINBOX_UPDATE_EVENT_NAME, params);
+        } catch (Exception e) {
+            SwrveLogger.e("SwrvePlugin: Unable to  emit swrve message details triggered event", e);
+        }
+    }
+
     protected void processAction(String unprocessedAction) {
         try {
             reactContext.getCurrentActivity().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(unprocessedAction)));
@@ -153,6 +170,10 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule {
 
     protected void setListeningDeeplink(boolean listeningDeeplink) {
         this.listeningDeeplink = listeningDeeplink;
+    }
+
+    protected void setListeningPushInboxUpdate(boolean listeningPushInboxUpdate) {
+        this.listeningPushInboxUpdate = listeningPushInboxUpdate;
     }
 
     private JSONObject embeddedMessageToJson(SwrveEmbeddedMessage message) throws Exception {

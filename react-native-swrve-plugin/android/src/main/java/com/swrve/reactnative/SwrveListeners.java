@@ -6,6 +6,7 @@ import com.swrve.sdk.SwrveLogger;
 import com.swrve.sdk.SwrvePushNotificationListener;
 import com.swrve.sdk.SwrveResourcesListener;
 import com.swrve.sdk.SwrveSilentPushListener;
+import com.swrve.sdk.SwrvePushInboxUpdateListener;
 import com.swrve.sdk.messaging.SwrveEmbeddedListener;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 
@@ -15,7 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-class SwrveListeners implements SwrveSilentPushListener, SwrvePushNotificationListener, SwrveResourcesListener, SwrveEmbeddedListener {
+class SwrveListeners implements SwrveSilentPushListener, SwrvePushNotificationListener, SwrveResourcesListener, SwrveEmbeddedListener, SwrvePushInboxUpdateListener {
 
     private static final Object LOCK = new Object();
     private static SwrveListeners instance;
@@ -120,6 +121,14 @@ class SwrveListeners implements SwrveSilentPushListener, SwrvePushNotificationLi
             SwrveLogger.w("SwrvePlugin: SwrveEmbeddedListener.onMessage() was triggered but need to buffer until receiver is ready");
             EmbeddedListenerHolder holder = new EmbeddedListenerHolder(message, personalizationProperties, isControl);
             embeddedListenerEventBuffer.add(holder);
+        }
+    }
+
+    @Override
+    public void onMessagesUpdated() { //SwrvePushInboxUpdateListener
+        SwrveLogger.d("SwrvePlugin: SwrvePushInboxUpdateListener.onMessagesUpdated()");
+        if (pluginEventEmitter != null) {
+            pluginEventEmitter.onPushInboxUpdate();
         }
     }
 

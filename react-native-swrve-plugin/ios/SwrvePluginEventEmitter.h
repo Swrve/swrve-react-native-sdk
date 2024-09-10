@@ -22,7 +22,7 @@ extern NSString *const RESOURCES_UPDATED_EVENT_NAME;
 extern NSString *const EMBEDDED_CALLBACK_EVENT_NAME;
 extern NSString *const MESSAGE_DETAILS_DELEGATE_EVENT_NAME;
 extern NSString *const DEEPLINK_DELEGATE_EVENT_NAME;
-
+extern NSString *const PUSHINBOX_UPDATE_EVENT_NAME;
 
 @interface SwrvePluginEventEmitter : RCTEventEmitter <RCTBridgeModule>
 

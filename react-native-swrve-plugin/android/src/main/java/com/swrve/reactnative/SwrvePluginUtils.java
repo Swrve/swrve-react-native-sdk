@@ -192,4 +192,14 @@ class SwrvePluginUtils {
             SwrveLogger.e("SwrvePlugin could not open deeplink:%s", ex, uriString);
         }
     }
+
+    static WritableArray createNativeArray() {
+        try {
+            WritableArray array = new WritableNativeArray();
+            return array;
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
+            SwrveLogger.e("SwrvePlugin: Create WritableNativeArray", e);
+        }
+        return null;
+    }
 }

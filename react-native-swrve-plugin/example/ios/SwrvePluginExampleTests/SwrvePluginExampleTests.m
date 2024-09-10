@@ -14,6 +14,12 @@
 #import "SwrvePluginPushHandler.h"
 #import "SwrvePluginEventEmitter.h"
 
+#if __has_include(<SwrveSDK/SwrveSDK-Swift.h>)
+#import <SwrveSDK/SwrveSDK-Swift.h>
+#elif __has_include("SwrveSDK-Swift.h")
+#import "SwrveSDK-Swift.h"
+#endif
+
 @interface SwrvePluginExampleTests : XCTestCase
 
 @property(nonatomic, strong) Swrve *swrve;
@@ -79,7 +85,7 @@
 
     NSDictionary *userUpdates = @{
             @"swrve.react_native_version": @"0.73.4",
-            @"swrve.react_native_plugin_version": @"5.0.1",
+            @"swrve.react_native_plugin_version": @"5.1.0",
             @"swrve.react_native_new_arch_enabled": @"false"
     };
     OCMVerify([self.swrve userUpdate:userUpdates]);
@@ -806,6 +812,294 @@
     OCMVerify([self.swrve personalizeEmbeddedMessageData:[OCMArg any] withPersonalization:[OCMArg any]]);
 }
 
+- (void)testGetPushInboxMessageCampaigns {
+  SwrvePushInboxMessage *pushInboxMessageMock = OCMClassMock([SwrvePushInboxMessage class]);
+  OCMStub([pushInboxMessageMock messageId]).andReturn(3614565938492356600);
+  OCMStub([pushInboxMessageMock variantId]).andReturn(3614565938492356601);
+  OCMStub([pushInboxMessageMock endDate]).andReturn(2145920400000);
+  OCMStub([pushInboxMessageMock sentDate]).andReturn(1663151262000);
+  NSMutableDictionary *cjDictionary = [[NSMutableDictionary alloc] init];
+  [cjDictionary setValue:@"bye" forKey:@"hello"];
+  OCMStub([pushInboxMessageMock customerJson]).andReturn(cjDictionary);
+  OCMStub([pushInboxMessageMock state]).andReturn(SwrvePushInboxMessageStateUNREAD);
+  
+  NSArray *mockList = [NSArray arrayWithObject:pushInboxMessageMock];
+  OCMExpect([self.swrve pushInboxMessages]).andReturn(mockList);
+  
+  XCTestExpectation *promiseResolved = [self expectationWithDescription:@"promiseResolved"];
+  
+  [self.plugin getPushInboxMessagesWithResolver:^(id result) {
+    
+    XCTAssertNotNil(result, @"result should not be null");
+    NSArray *pushInboxMessages = (NSArray *) result;
+    
+    NSDictionary *pushInboxMessage = [pushInboxMessages firstObject];
+    XCTAssertNotNil(pushInboxMessage, @"pushInboxMessage should not be null");
+    XCTAssertEqualObjects([pushInboxMessage objectForKey:@"messageId"], @"3614565938492356600");
+    XCTAssertEqualObjects([pushInboxMessage objectForKey:@"variantId"], @"3614565938492356601");
+    XCTAssertEqual([[pushInboxMessage objectForKey:@"endDate"] integerValue], 2145920400000);
+    XCTAssertEqual([[pushInboxMessage objectForKey:@"sentDate"] integerValue], 1663151262000);
+    NSDictionary *customerJson = [pushInboxMessage objectForKey:@"customerJson"];
+    XCTAssertEqualObjects([customerJson objectForKey:@"hello"], @"bye");
+    XCTAssertEqualObjects([pushInboxMessage objectForKey:@"state"], @"UNREAD");
+    
+    [promiseResolved fulfill];
+  }                                                rejecter:^(NSString *code, NSString *message, NSError *error) {
+    XCTFail(@"Rejected: this should not be rejected");
+  }];
+  
+  // waiting for resolver to complete
+  [self waitForExpectationsWithTimeout:15 handler:^(NSError *error) {
+    if (error) {
+      XCTFail(@"Ran out of time: getPushInboxMessages");
+    }
+  }];
+  
+  OCMVerify([self.swrve pushInboxMessages]);
+}
+
+- (void)testEngagePushInboxMessageSuccess {
+  
+  UInt64 knownMessageId = 3614565938492356600;
+  SwrvePushInboxResult *knownResult = [[SwrvePushInboxResult alloc] init:SwrvePushInboxResultCodeSUCCESS :@"" :200];
+  OCMExpect([self.swrve engagePushInboxMessage:knownMessageId listener:OCMOCK_ANY]).andDo(^(NSInvocation *invocation) {
+      // Extract the listener argument from the invocation
+      __unsafe_unretained id<SwrvePushInboxDelegate> delegate;
+      [invocation getArgument:&delegate atIndex:3]; // The listener is the 3rd argument (0 is self, 1 is the selector, 2 is messageId, 3 is listener)
+      [delegate onComplete:knownMessageId result:knownResult]; // Simulate the delegate's onComplete method being called
+  });
+
+  XCTestExpectation *promiseResolved = [self expectationWithDescription:@"promiseResolved"];
+  
+  NSString *knownMessageIdString = [[NSNumber numberWithUnsignedLongLong:knownMessageId] stringValue];
+  [self.plugin engagePushInboxMessageWithMessageId:knownMessageIdString
+                                          resolver:^(id result) {
+    XCTAssertNotNil(result, @"result should not be null");
+    
+    NSDictionary *resultDictionary = result;
+    XCTAssertNotNil(resultDictionary, @"Result should not be null");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"messageId"], knownMessageIdString);
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"resultCode"], @"SUCCESS");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"errorMessage"], @"");
+    XCTAssertEqual([[resultDictionary objectForKey:@"httpResponseCode"] integerValue], 200);
+
+    [promiseResolved fulfill];
+  }
+                                          rejecter:^(NSString *code, NSString *message, NSError *error) {
+    XCTFail(@"Rejected: this should not be rejected");
+  }];
+  
+  // waiting for resolver to complete
+  [self waitForExpectationsWithTimeout:15 handler:^(NSError *error) {
+    if (error) {
+      XCTFail(@"Ran out of time: engagePushInboxMessageWithMessageId");
+    }
+  }];
+  
+  OCMVerify([self.swrve engagePushInboxMessage:knownMessageId listener:OCMOCK_ANY]);
+}
+
+- (void)testEngagePushInboxMessageError {
+  
+  UInt64 knownMessageId = 3614565938492356600;
+  SwrvePushInboxResult *knownResult = [[SwrvePushInboxResult alloc] init:SwrvePushInboxResultCodeERROR :@"Server Error" :500];
+  OCMExpect([self.swrve engagePushInboxMessage:knownMessageId listener:OCMOCK_ANY]).andDo(^(NSInvocation *invocation) {
+      // Extract the listener argument from the invocation
+      __unsafe_unretained id<SwrvePushInboxDelegate> delegate;
+      [invocation getArgument:&delegate atIndex:3]; // The listener is the 3rd argument (0 is self, 1 is the selector, 2 is messageId, 3 is listener)
+      [delegate onComplete:knownMessageId result:knownResult]; // Simulate the delegate's onComplete method being called
+  });
+
+  XCTestExpectation *promiseResolved = [self expectationWithDescription:@"promiseResolved"];
+  
+  NSString *knownMessageIdString = [[NSNumber numberWithUnsignedLongLong:knownMessageId] stringValue];
+  [self.plugin engagePushInboxMessageWithMessageId:knownMessageIdString
+                                          resolver:^(id result) {
+    XCTAssertNotNil(result, @"result should not be null");
+    
+    NSDictionary *resultDictionary = result;
+    XCTAssertNotNil(resultDictionary, @"Result should not be null");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"messageId"], knownMessageIdString);
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"resultCode"], @"ERROR");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"errorMessage"], @"Server Error");
+    XCTAssertEqual([[resultDictionary objectForKey:@"httpResponseCode"] integerValue], 500);
+
+    [promiseResolved fulfill];
+  }
+                                          rejecter:^(NSString *code, NSString *message, NSError *error) {
+    XCTFail(@"Rejected: this should not be rejected");
+  }];
+  
+  // waiting for resolver to complete
+  [self waitForExpectationsWithTimeout:15 handler:^(NSError *error) {
+    if (error) {
+      XCTFail(@"Ran out of time: engagePushInboxMessageWithMessageId");
+    }
+  }];
+  
+  OCMVerify([self.swrve engagePushInboxMessage:knownMessageId listener:OCMOCK_ANY]);
+}
+
+- (void)testReadPushInboxMessageSuccess {
+  
+  UInt64 knownMessageId = 3614565938492356600;
+  SwrvePushInboxResult *knownResult = [[SwrvePushInboxResult alloc] init:SwrvePushInboxResultCodeSUCCESS :@"" :200];
+  OCMExpect([self.swrve readPushInboxMessage:knownMessageId listener:OCMOCK_ANY]).andDo(^(NSInvocation *invocation) {
+      // Extract the listener argument from the invocation
+      __unsafe_unretained id<SwrvePushInboxDelegate> delegate;
+      [invocation getArgument:&delegate atIndex:3]; // The listener is the 3rd argument (0 is self, 1 is the selector, 2 is messageId, 3 is listener)
+      [delegate onComplete:knownMessageId result:knownResult]; // Simulate the delegate's onComplete method being called
+  });
+
+  XCTestExpectation *promiseResolved = [self expectationWithDescription:@"promiseResolved"];
+  
+  NSString *knownMessageIdString = [[NSNumber numberWithUnsignedLongLong:knownMessageId] stringValue];
+  [self.plugin readPushInboxMessageWithMessageId:knownMessageIdString
+                                          resolver:^(id result) {
+    XCTAssertNotNil(result, @"result should not be null");
+    
+    NSDictionary *resultDictionary = result;
+    XCTAssertNotNil(resultDictionary, @"Result should not be null");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"messageId"], knownMessageIdString);
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"resultCode"], @"SUCCESS");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"errorMessage"], @"");
+    XCTAssertEqual([[resultDictionary objectForKey:@"httpResponseCode"] integerValue], 200);
+
+    [promiseResolved fulfill];
+  }
+                                          rejecter:^(NSString *code, NSString *message, NSError *error) {
+    XCTFail(@"Rejected: this should not be rejected");
+  }];
+  
+  // waiting for resolver to complete
+  [self waitForExpectationsWithTimeout:15 handler:^(NSError *error) {
+    if (error) {
+      XCTFail(@"Ran out of time: readPushInboxMessageWithMessageId");
+    }
+  }];
+  
+  OCMVerify([self.swrve readPushInboxMessage:knownMessageId listener:OCMOCK_ANY]);
+}
+
+- (void)testReadPushInboxMessageError {
+  
+  UInt64 knownMessageId = 3614565938492356600;
+  SwrvePushInboxResult *knownResult = [[SwrvePushInboxResult alloc] init:SwrvePushInboxResultCodeERROR :@"Server Error" :500];
+  OCMExpect([self.swrve readPushInboxMessage:knownMessageId listener:OCMOCK_ANY]).andDo(^(NSInvocation *invocation) {
+      // Extract the listener argument from the invocation
+      __unsafe_unretained id<SwrvePushInboxDelegate> delegate;
+      [invocation getArgument:&delegate atIndex:3]; // The listener is the 3rd argument (0 is self, 1 is the selector, 2 is messageId, 3 is listener)
+      [delegate onComplete:knownMessageId result:knownResult]; // Simulate the delegate's onComplete method being called
+  });
+
+  XCTestExpectation *promiseResolved = [self expectationWithDescription:@"promiseResolved"];
+  NSString *knownMessageIdString = [[NSNumber numberWithUnsignedLongLong:knownMessageId] stringValue];
+  [self.plugin readPushInboxMessageWithMessageId:knownMessageIdString
+                                          resolver:^(id result) {
+    XCTAssertNotNil(result, @"result should not be null");
+    
+    NSDictionary *resultDictionary = result;
+    XCTAssertNotNil(resultDictionary, @"Result should not be null");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"messageId"], knownMessageIdString);
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"resultCode"], @"ERROR");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"errorMessage"], @"Server Error");
+    XCTAssertEqual([[resultDictionary objectForKey:@"httpResponseCode"] integerValue], 500);
+
+    [promiseResolved fulfill];
+  }
+                                          rejecter:^(NSString *code, NSString *message, NSError *error) {
+    XCTFail(@"Rejected: this should not be rejected");
+  }];
+  
+  // waiting for resolver to complete
+  [self waitForExpectationsWithTimeout:15 handler:^(NSError *error) {
+    if (error) {
+      XCTFail(@"Ran out of time: readPushInboxMessageWithMessageId");
+    }
+  }];
+  
+  OCMVerify([self.swrve readPushInboxMessage:knownMessageId listener:OCMOCK_ANY]);
+}
+
+- (void)testDeletePushInboxMessageSuccess {
+  
+  UInt64 knownMessageId = 3614565938492356600;
+  SwrvePushInboxResult *knownResult = [[SwrvePushInboxResult alloc] init:SwrvePushInboxResultCodeSUCCESS :@"" :200];
+  OCMExpect([self.swrve deletePushInboxMessage:knownMessageId listener:OCMOCK_ANY]).andDo(^(NSInvocation *invocation) {
+      // Extract the listener argument from the invocation
+      __unsafe_unretained id<SwrvePushInboxDelegate> delegate;
+      [invocation getArgument:&delegate atIndex:3]; // The listener is the 3rd argument (0 is self, 1 is the selector, 2 is messageId, 3 is listener)
+      [delegate onComplete:knownMessageId result:knownResult]; // Simulate the delegate's onComplete method being called
+  });
+
+  XCTestExpectation *promiseResolved = [self expectationWithDescription:@"promiseResolved"];
+  NSString *knownMessageIdString = [[NSNumber numberWithUnsignedLongLong:knownMessageId] stringValue];
+  [self.plugin deletePushInboxMessageWithMessageId:knownMessageIdString
+                                          resolver:^(id result) {
+    XCTAssertNotNil(result, @"result should not be null");
+    
+    NSDictionary *resultDictionary = result;
+    XCTAssertNotNil(resultDictionary, @"Result should not be null");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"messageId"], knownMessageIdString);
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"resultCode"], @"SUCCESS");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"errorMessage"], @"");
+    XCTAssertEqual([[resultDictionary objectForKey:@"httpResponseCode"] integerValue], 200);
+
+    [promiseResolved fulfill];
+  }
+                                          rejecter:^(NSString *code, NSString *message, NSError *error) {
+    XCTFail(@"Rejected: this should not be rejected");
+  }];
+  
+  // waiting for resolver to complete
+  [self waitForExpectationsWithTimeout:15 handler:^(NSError *error) {
+    if (error) {
+      XCTFail(@"Ran out of time: deletePushInboxMessageWithMessageId");
+    }
+  }];
+  
+  OCMVerify([self.swrve deletePushInboxMessage:knownMessageId listener:OCMOCK_ANY]);
+}
+
+- (void)testDeletePushInboxMessageError {
+  
+  UInt64 knownMessageId = 3614565938492356600;
+  SwrvePushInboxResult *knownResult = [[SwrvePushInboxResult alloc] init:SwrvePushInboxResultCodeERROR :@"Server Error" :500];
+  OCMExpect([self.swrve deletePushInboxMessage:knownMessageId listener:OCMOCK_ANY]).andDo(^(NSInvocation *invocation) {
+      // Extract the listener argument from the invocation
+      __unsafe_unretained id<SwrvePushInboxDelegate> delegate;
+      [invocation getArgument:&delegate atIndex:3]; // The listener is the 3rd argument (0 is self, 1 is the selector, 2 is messageId, 3 is listener)
+      [delegate onComplete:knownMessageId result:knownResult]; // Simulate the delegate's onComplete method being called
+  });
+
+  XCTestExpectation *promiseResolved = [self expectationWithDescription:@"promiseResolved"];
+  NSString *knownMessageIdString = [[NSNumber numberWithUnsignedLongLong:knownMessageId] stringValue];
+  [self.plugin deletePushInboxMessageWithMessageId:knownMessageIdString
+                                          resolver:^(id result) {
+    XCTAssertNotNil(result, @"result should not be null");
+    
+    NSDictionary *resultDictionary = result;
+    XCTAssertNotNil(resultDictionary, @"Result should not be null");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"messageId"], knownMessageIdString);
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"resultCode"], @"ERROR");
+    XCTAssertEqualObjects([resultDictionary objectForKey:@"errorMessage"], @"Server Error");
+    XCTAssertEqual([[resultDictionary objectForKey:@"httpResponseCode"] integerValue], 500);
+
+    [promiseResolved fulfill];
+  }
+                                          rejecter:^(NSString *code, NSString *message, NSError *error) {
+    XCTFail(@"Rejected: this should not be rejected");
+  }];
+  
+  // waiting for resolver to complete
+  [self waitForExpectationsWithTimeout:15 handler:^(NSError *error) {
+    if (error) {
+      XCTFail(@"Ran out of time: deletePushInboxMessageWithMessageId");
+    }
+  }];
+  
+  OCMVerify([self.swrve deletePushInboxMessage:knownMessageId listener:OCMOCK_ANY]);
+}
 
 + (void)createDummyAsset:(NSString *)asset {
     NSFileManager *fileManager = [NSFileManager defaultManager];

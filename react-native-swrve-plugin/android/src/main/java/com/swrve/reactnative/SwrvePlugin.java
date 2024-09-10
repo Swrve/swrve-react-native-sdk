@@ -40,6 +40,7 @@ public class SwrvePlugin {
 
         SwrveSDK.createInstance(application, appId, apiKey, config);
         SwrveSDK.setResourcesListener(swrveListeners);
+        SwrveSDK.setPushInboxUpdateListener(swrveListeners);
 
         new SwrvePluginUserUpdate(application);
     }
