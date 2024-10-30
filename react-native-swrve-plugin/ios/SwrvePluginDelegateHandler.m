@@ -51,13 +51,13 @@
 
 NSString *stringFromMessageActionEnum(SwrveMessageAction enumValue) {
     switch (enumValue) {
-        case SwrveImpression:
+        case SwrveMessageActionImpression:
             return @"Impression";
-        case SwrveActionCustom:
+        case SwrveMessageActionCustom:
             return @"Custom";
-        case SwrveActionDismiss:
+        case SwrveMessageActionDismiss:
             return @"Dismiss";
-        case SwrveActionClipboard:
+        case SwrveMessageActionClipboard:
             return @"Clipboard";
         default:
             return @"Default";

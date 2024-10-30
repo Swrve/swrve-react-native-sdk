@@ -2,23 +2,11 @@
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
 
-#import <SwrveSDK/Swrve.h>
-#import <SwrveSDK/SwrveSDK.h>
-#import <SwrveSDK/SwrveCampaign.h>
-#import <SwrveSDK/SwrveCampaignStatus.h>
-#import <SwrveSDK/SwrveMessageCenterDetails.h>
-#import <SwrveSDK/SwrveMessageController+Private.h>
-#import <SwrveSDKCommon/SwrveUtils.h>
+@import SwrveSDK;
 
 #import "SwrvePlugin.h"
 #import "SwrvePluginPushHandler.h"
 #import "SwrvePluginEventEmitter.h"
-
-#if __has_include(<SwrveSDK/SwrveSDK-Swift.h>)
-#import <SwrveSDK/SwrveSDK-Swift.h>
-#elif __has_include("SwrveSDK-Swift.h")
-#import "SwrveSDK-Swift.h"
-#endif
 
 @interface SwrvePluginExampleTests : XCTestCase
 
@@ -85,7 +73,7 @@
 
     NSDictionary *userUpdates = @{
             @"swrve.react_native_version": @"0.73.4",
-            @"swrve.react_native_plugin_version": @"5.1.0",
+            @"swrve.react_native_plugin_version": @"6.0.0",
             @"swrve.react_native_new_arch_enabled": @"false"
     };
     OCMVerify([self.swrve userUpdate:userUpdates]);
@@ -350,7 +338,7 @@
 
     // Mock Campaign State
     OCMStub([campaignStateMock campaignID]).andReturn(44);
-    OCMStub([campaignStateMock status]).andReturn(SWRVE_CAMPAIGN_STATUS_UNSEEN);
+    OCMStub([campaignStateMock status]).andReturn(SwrveCampaignStatusUnseen);
     OCMStub([campaignStateMock impressions]).andReturn(0);
 
     // Mock Campaign Message Center Details
@@ -429,7 +417,7 @@
 
     // Mock Campaign State
     OCMStub([campaignStateMock campaignID]).andReturn(44);
-    OCMStub([campaignStateMock status]).andReturn(SWRVE_CAMPAIGN_STATUS_UNSEEN);
+    OCMStub([campaignStateMock status]).andReturn(SwrveCampaignStatusUnseen);
     OCMStub([campaignStateMock impressions]).andReturn(0);
 
     // Mock Campaign Message Center Details

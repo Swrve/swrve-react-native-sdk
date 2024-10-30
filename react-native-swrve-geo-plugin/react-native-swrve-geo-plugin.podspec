@@ -24,5 +24,5 @@ Pod::Spec.new do |s|
 # Do something like "~> 9.0". 
 # DO NOT do something like "~> 9.0.0"
   s.dependency "SwrveGeoSDK", "~> 5.0"
-  s.dependency "SwrveSDKCommon", "~> 9.0"
+  s.dependency "SwrveSDKCommon", "~> 10.0"
 end

@@ -5,15 +5,7 @@
 #import "SwrveCallbackStateManager.h"
 #import "SwrvePluginPushHandler.h"
 #import "SwrvePluginDelegateHandler.h"
-#import <SwrveSDKCommon/SwrveUtils.h>
-#import <SwrveSDK/SwrveSDK.h>
-#import <SwrveSDK/SwrveCampaign.h>
-
-#if __has_include(<SwrveSDK/SwrveSDK-Swift.h>)
-#import <SwrveSDK/SwrveSDK-Swift.h>
-#elif __has_include("SwrveSDK-Swift.h")
-#import "SwrveSDK-Swift.h"
-#endif
+@import SwrveSDK;
 
 @interface SwrvePushInboxDelegateHandler : NSObject <SwrvePushInboxDelegate>
 
@@ -774,7 +766,7 @@ RCT_REMAP_METHOD(deletePushInboxMessage, deletePushInboxMessageWithMessageId:(NS
     NSArray *campaigns = [cache objectForKey:@"campaigns"];
     for (NSDictionary *campaign in campaigns) {
         if (campaignId == [[campaign valueForKey:@"id"] integerValue]) {
-            SwrveEmbeddedCampaign *embeddedCampaign = [[SwrveEmbeddedCampaign alloc] initAtTime:[NSDate date] fromDictionary:campaign forController:nil];
+            SwrveEmbeddedCampaign *embeddedCampaign = [[SwrveEmbeddedCampaign alloc] initAt:[NSDate date] from:campaign];
             return embeddedCampaign;
         }
     }
@@ -783,13 +775,13 @@ RCT_REMAP_METHOD(deletePushInboxMessage, deletePushInboxMessageWithMessageId:(NS
 
 - (NSString *)translateCampaignStatus:(NSUInteger)status {
     switch (status) {
-        case SWRVE_CAMPAIGN_STATUS_UNSEEN:
+        case SwrveCampaignStatusUnseen:
             return @"Unseen";
             break;
-        case SWRVE_CAMPAIGN_STATUS_SEEN:
+        case SwrveCampaignStatusSeen:
             return @"Seen";
             break;
-        case SWRVE_CAMPAIGN_STATUS_DELETED:
+        case SwrveCampaignStatusDeleted:
             return @"Deleted";
             break;
         default:

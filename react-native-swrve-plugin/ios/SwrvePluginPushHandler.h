@@ -1,6 +1,5 @@
 #import <Foundation/Foundation.h>
-#import <SwrveSDKCommon/SwrvePush.h>
-#import "SwrveEmbeddedMessage.h"
+@import SwrveSDK;
 
 NS_ASSUME_NONNULL_BEGIN
 

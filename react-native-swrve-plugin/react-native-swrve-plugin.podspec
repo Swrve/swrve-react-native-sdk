@@ -22,6 +22,6 @@ Pod::Spec.new do |s|
 # Do not add a second dot and number for a patch. Eg: 
 # Do something like "~> 9.0". 
 # DO NOT do something like "~> 9.0.0"
-  s.dependency "SwrveSDK", "~> 9.0"
+  s.dependency "SwrveSDK", "~> 10.0"
 
 end

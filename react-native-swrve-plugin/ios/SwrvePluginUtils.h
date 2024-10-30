@@ -1,5 +1,5 @@
 #import <Foundation/Foundation.h>
-#import <SwrveSDK/SwrveSDK.h>
+@import SwrveSDK;
 
 NS_ASSUME_NONNULL_BEGIN
 

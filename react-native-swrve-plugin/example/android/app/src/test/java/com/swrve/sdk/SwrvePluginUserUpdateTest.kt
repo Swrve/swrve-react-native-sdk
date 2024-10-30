@@ -38,7 +38,7 @@ class SwrvePluginUtilsTest : SwrveBaseMockitoTest() {
         SwrvePluginUserUpdate(mockContext).sendSwrveUserUpdate()
         val map = HashMap<String, String>()
         map["swrve.react_native_version"] = "0.73.4"
-        map["swrve.react_native_plugin_version"] = "5.1.0"
+        map["swrve.react_native_plugin_version"] = "6.0.0"
         map["swrve.react_native_new_arch_enabled"] = "false"
         verify<Swrve>(mockSwrve).userUpdate(map)
 
@@ -48,7 +48,7 @@ class SwrvePluginUtilsTest : SwrveBaseMockitoTest() {
         spySwrvePluginUtils.sendSwrveUserUpdate()
         val map2 = HashMap<String, String>()
         map2["swrve.react_native_version"] = "0.73.4"
-        map2["swrve.react_native_plugin_version"] = "5.1.0"
+        map2["swrve.react_native_plugin_version"] = "6.0.0"
         map2["swrve.react_native_new_arch_enabled"] = "true"
         verify<Swrve>(mockSwrve).userUpdate(map2)
     }

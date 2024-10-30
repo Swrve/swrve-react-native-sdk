@@ -92,5 +92,5 @@ dependencies {
   implementation "com.facebook.react:react-native:+"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
-  api 'com.swrve.sdk.android:swrve-firebase:10.+' // Swrve SDK
+  api 'com.swrve.sdk.android:swrve-firebase:11.+' // Swrve SDK
 }

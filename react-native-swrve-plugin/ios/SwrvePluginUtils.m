@@ -1,7 +1,7 @@
 #import "SwrvePluginUtils.h"
 #import "SwrvePlugin.h"
-#import <SwrveSDK/SwrveSDK.h>
 #import <React/RCTVersion.h>
+@import SwrveSDK;
 
 @implementation SwrvePluginUtils
 

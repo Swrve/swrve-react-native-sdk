@@ -1,7 +1,7 @@
 {
     "name": "react-native-swrve-geo-plugin",
     "title": "React Native Swrve Geo Plugin",
-    "version": "5.1.0",
+    "version": "6.0.0",
     "description": "React Native Plugin for Swrve Geo",
     "main": "./lib/SwrveGeoSDK.js",
     "types": "./index.d.ts",
@@ -13,7 +13,14 @@
         "url": "git+https://github.com/Swrve/swrve-react-native-sdk.git",
         "baseUrl": "https://github.com/Swrve/swrve-react-native-sdk"
     },
-    "keywords": [ "swrve", "analytics", "messaging", "react-native", "react-native-ios", "react-native-android" ],
+    "keywords": [
+        "swrve",
+        "analytics",
+        "messaging",
+        "react-native",
+        "react-native-ios",
+        "react-native-android"
+    ],
     "author": {
         "name": "Swrve Mobile Inc or its licensors",
         "email": "success@swrve.com"

@@ -1,9 +1,6 @@
 #import "SwrvePluginEventEmitter.h"
 #import "SwrveCallbackStateManager.h"
-#import <SwrveSDK/SwrveEmbeddedMessage.h>
-#import <SwrveSDK/SwrveMessageDetails.h>
-#import <SwrveSDK/SwrveButtonActions.h>
-#import <SwrveSDK/SwrveMessageButtonDetails.h>
+@import SwrveSDK;
 
 
 @interface SwrvePluginEventEmitter ()
@@ -209,7 +206,7 @@ RCT_EXPORT_MODULE();
     NSString *messageData = @"";
 
     if (embeddedMessage != nil) {
-        messageType = (embeddedMessage.type == kSwrveEmbeddedDataTypeJson) ? @"json" : @"other";
+        messageType = (embeddedMessage.type == SwrveEmbeddedDataTypeJson) ? @"json" : @"other";
     }
 
     if ([embeddedMessage data] != nil) {

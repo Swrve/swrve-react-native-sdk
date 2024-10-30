@@ -55,7 +55,6 @@ public class SwrvePlugin {
 
         if (passedInAppConfig != null) {
             // All styling settings get retained
-            inAppConfigBuilder.hideToolbar(passedInAppConfig.isHideToolbar());
             inAppConfigBuilder.clickColor(passedInAppConfig.getClickColor());
             inAppConfigBuilder.messageFocusListener(passedInAppConfig.getMessageFocusListener());
             inAppConfigBuilder.defaultBackgroundColor(passedInAppConfig.getDefaultBackgroundColor());
