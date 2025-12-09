@@ -1,7 +1,7 @@
 #import <React/RCTBridgeModule.h>
 @import SwrveSDK;
 
-#define SWRVE_PLUGIN_VERSION "6.0.0"
+#define SWRVE_PLUGIN_VERSION "6.1.0"
 
 @protocol SwrvePluginNativeProtocol <NSObject>
 
@@ -81,6 +81,10 @@ NS_ASSUME_NONNULL_BEGIN
                                 rejecter:(RCTPromiseRejectBlock)reject;
 
 - (void)getMessageCenterCampaignsWithPersonalization:(NSDictionary *_Nullable)personalization
+                                            resolver:(RCTPromiseResolveBlock)resolve
+                                            rejecter:(RCTPromiseRejectBlock)reject;
+
+- (void)getEmbeddedMessageCenterCampaignsWithPersonalization:(NSDictionary *_Nullable)personalization
                                             resolver:(RCTPromiseResolveBlock)resolve
                                             rejecter:(RCTPromiseRejectBlock)reject;
 

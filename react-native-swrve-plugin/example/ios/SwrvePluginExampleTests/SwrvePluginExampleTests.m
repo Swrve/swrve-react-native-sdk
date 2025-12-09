@@ -56,6 +56,10 @@
   [SwrveSDK resetSwrveSharedInstance];
 }
 
+- (void)testNativeSDKVersion {
+    XCTAssertEqualObjects(@SWRVE_SDK_VERSION, @"10.8.4");
+}
+
 - (void)testStartWithUserId {
 
     [SwrveSDK addSharedInstance:self.swrve];
@@ -72,8 +76,8 @@
     }];
 
     NSDictionary *userUpdates = @{
-            @"swrve.react_native_version": @"0.73.4",
-            @"swrve.react_native_plugin_version": @"6.0.0",
+            @"swrve.react_native_version": @"0.80.1",
+            @"swrve.react_native_plugin_version": @"6.1.0",
             @"swrve.react_native_new_arch_enabled": @"false"
     };
     OCMVerify([self.swrve userUpdate:userUpdates]);
@@ -328,7 +332,7 @@
 
     [self.plugin refreshCampaignsAndResources];
 
-    OCMVerify([self.swrve refreshCampaignsAndResources]);
+    OCMVerify([self.swrve refreshContent:nil]);
 }
 
 - (void)testGetMessageCenterCampaigns {
@@ -408,6 +412,81 @@
     }];
 
     OCMVerify([self.swrve messageCenterCampaigns]);
+}
+
+- (void)testGetEmbeddedMessageCenterCampaigns {
+    
+    // Mock Embedded message
+    SwrveEmbeddedMessage *embeddedMessageMock = OCMClassMock([SwrveEmbeddedMessage class]);
+    OCMStub([embeddedMessageMock messageID]).andReturn(@44);
+    OCMStub([embeddedMessageMock campaignID]).andReturn(55);
+    OCMStub([embeddedMessageMock name]).andReturn(@"some name");
+    OCMStub([embeddedMessageMock priority]).andReturn([NSNumber numberWithInt:(9999)]);
+    OCMStub([embeddedMessageMock type]).andReturn(SwrveEmbeddedDataTypeJson);
+    NSDictionary *rawDict = @{ @"hello": @"world" };
+    OCMStub([embeddedMessageMock data]).andReturn(@"{\"hello\":\"world\"}");
+    OCMStub([embeddedMessageMock dataRaw]).andReturn(rawDict);
+    OCMStub([embeddedMessageMock control]).andReturn(NO);
+
+    SwrveCampaign *campaignMock = OCMClassMock([SwrveCampaign class]);
+    OCMStub([campaignMock downloadDate]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
+    OCMStub([campaignMock dateStart]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
+    OCMStub([campaignMock dateEnd]).andReturn([NSDate dateWithTimeIntervalSince1970:1362671700]);
+
+    SwrveCampaignState *campaignStateMock = OCMClassMock([SwrveCampaignState class]);
+    OCMStub([campaignStateMock campaignID]).andReturn(44);
+    OCMStub([campaignStateMock status]).andReturn(SwrveCampaignStatusUnseen);
+    OCMStub([campaignStateMock impressions]).andReturn(0);
+    OCMStub([campaignMock state]).andReturn(campaignStateMock);
+    OCMStub([embeddedMessageMock campaign]).andReturn(campaignMock);
+
+    // Mock Embedded List
+    NSArray *mockList = [NSArray arrayWithObject:embeddedMessageMock];
+    NSDictionary *emptyPersonalization = @{}; // use empty map to avoid nil handling differences
+    OCMExpect([self.swrve embeddedMessageCenterCampaigns:emptyPersonalization]).andReturn(mockList);
+
+    XCTestExpectation *promiseResolved = [self expectationWithDescription:@"promiseResolved"];
+
+    [self.plugin getEmbeddedMessageCenterCampaignsWithPersonalization:emptyPersonalization resolver:^(id result) {
+
+        XCTAssertNotNil(result, @"result should not be null");
+        NSArray *messages = (NSArray *) result;
+
+        NSDictionary *firstEmbeddedMessage = [messages firstObject];
+        XCTAssertNotNil(firstEmbeddedMessage, @"Embedded message from Message Center should not be null");
+        XCTAssertEqual([[firstEmbeddedMessage objectForKey:@"ID"] integerValue], 44);
+        XCTAssertEqual([[firstEmbeddedMessage objectForKey:@"campaignId"] integerValue], 55);
+        XCTAssertEqualObjects([firstEmbeddedMessage objectForKey:@"name"], @"some name");
+        XCTAssertEqual([[firstEmbeddedMessage objectForKey:@"priority"] integerValue], 9999);
+        XCTAssertEqual([[firstEmbeddedMessage objectForKey:@"downloadDate"] integerValue], 1362671700);
+        XCTAssertEqual([[firstEmbeddedMessage objectForKey:@"dateStart"] integerValue], 1362671700);
+        XCTAssertEqual([[firstEmbeddedMessage objectForKey:@"dateEnd"] integerValue], 1362671700);
+        XCTAssertEqualObjects([firstEmbeddedMessage objectForKey:@"type"], @"json");
+        XCTAssertEqualObjects([firstEmbeddedMessage objectForKey:@"data"], @"{\"hello\":\"world\"}");
+        NSDictionary *mappedRaw = [firstEmbeddedMessage objectForKey:@"dataRaw"];
+        XCTAssertNotNil(mappedRaw);
+        XCTAssertEqualObjects([mappedRaw objectForKey:@"hello"], @"world");
+        XCTAssertEqualObjects([firstEmbeddedMessage objectForKey:@"control"], @NO);
+
+        NSDictionary *firstEmbeddedMessageState = [firstEmbeddedMessage objectForKey:@"state"];
+        XCTAssertEqual([[firstEmbeddedMessageState objectForKey:@"next"] integerValue], 0);
+        XCTAssertEqualObjects([firstEmbeddedMessageState objectForKey:@"status"], @"Unseen");
+        XCTAssertEqual([[firstEmbeddedMessageState objectForKey:@"impressions"] integerValue], 0);
+
+        [promiseResolved fulfill];
+
+    }                                                rejecter:^(NSString *code, NSString *message, NSError *error) {
+        XCTFail(@"Rejected: this should not be rejected. getEmbeddedMessageCenterCampaignsWithPersonalization");
+    }];
+
+    // waiting for resolver to complete
+    [self waitForExpectationsWithTimeout:15 handler:^(NSError *error) {
+        if (error) {
+            XCTFail(@"Ran out of time: getEmbeddedMessageCenterCampaignsWithPersonalization");
+        }
+    }];
+
+    OCMVerify([self.swrve embeddedMessageCenterCampaigns:emptyPersonalization]);
 }
 
 - (void)testGetMessageCenterCampaign {

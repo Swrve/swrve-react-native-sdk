@@ -141,6 +141,8 @@ export function getMessageCenterCampaigns(personalization?: Map): Promise<Array<
 
 export function getMessageCenterCampaign(campaignId: number, personalization?: Map): Promise<Map>;
 
+export function getEmbeddedMessageCenterCampaigns(personalization?: any): Promise<Array<any>>;
+
 export function getPersonalizedText(text: string, personalizationProperties: Map): Promise<string>;
 
 export function getPersonalizedEmbeddedMessageData(campaignId: number, personalizationProperties: Map): Promise<string>;

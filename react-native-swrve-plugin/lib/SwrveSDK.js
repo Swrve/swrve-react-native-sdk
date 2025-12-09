@@ -287,6 +287,10 @@ class SwrveSDK {
         return SwrvePlugin.getMessageCenterCampaign(campaignId, personalization);
     }
 
+    async getEmbeddedMessageCenterCampaigns(personalization) {
+        return SwrvePlugin.getEmbeddedMessageCenterCampaigns(personalization);
+    }
+
     async getPersonalizedText(text, personalizationProperties) {
         return SwrvePlugin.getPersonalizedText(text, personalizationProperties);
     }

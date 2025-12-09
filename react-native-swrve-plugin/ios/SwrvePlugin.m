@@ -428,6 +428,23 @@ RCT_REMAP_METHOD(getMessageCenterCampaigns, getMessageCenterCampaignsWithPersona
     }
 }
 
+RCT_REMAP_METHOD(getEmbeddedMessageCenterCampaigns, getEmbeddedMessageCenterCampaignsWithPersonalization:(NSDictionary * _Nullable)personalization resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
+    @try {
+        NSArray<SwrveEmbeddedMessage *> *messages = [self.swrveInstance embeddedMessageCenterCampaigns:personalization];
+
+        NSMutableArray *messageAsArray = [[NSMutableArray alloc] init];
+        for (SwrveEmbeddedMessage *message in messages) {
+            NSMutableDictionary *campaignDictionary = [self mapSwrveEmbeddedMessageToMessageCenterJSON:message];
+            [messageAsArray addObject:campaignDictionary];
+        }
+
+        resolve(messageAsArray);
+    } @catch (NSException *ex) {
+        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
+        reject(ex.name, ex.reason, error);
+    }
+}
+
 RCT_REMAP_METHOD(getMessageCenterCampaign, getMessageCenterCampaignWithId:(NSInteger)campaignID andPersonalization:(NSDictionary * _Nullable) personalization resolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject) {
     @try {
         SwrveCampaign *candidate = [self.swrveInstance messageCenterCampaignWithID:campaignID andPersonalization:personalization];
@@ -542,7 +559,7 @@ RCT_REMAP_METHOD(getPersonalizedEmbeddedMessageData, getPersonalizedEmbeddedMess
 }
 
 RCT_EXPORT_METHOD(refreshCampaignsAndResources) {
-    [self.swrveInstance refreshCampaignsAndResources];
+    [self.swrveInstance refreshContent:nil];
 }
 
 #pragma mark - listening functions
@@ -717,6 +734,40 @@ RCT_REMAP_METHOD(deletePushInboxMessage, deletePushInboxMessageWithMessageId:(NS
         [campaignDictionary setObject:campaignMessageCenterDetailsDictionary forKey:@"messageCenterDetails"];
     }
     return campaignDictionary;
+}
+
+- (NSMutableDictionary *)mapSwrveEmbeddedMessageToMessageCenterJSON:(SwrveEmbeddedMessage *)message {
+    NSMutableDictionary *messageDictionary = [[NSMutableDictionary alloc] init];
+    [messageDictionary setValue:[message messageID] forKey:@"ID"];
+    [messageDictionary setValue:[NSNumber numberWithUnsignedInteger:[message campaignID]] forKey:@"campaignId"];
+    [messageDictionary setValue:[message name] forKey:@"name"];
+    [messageDictionary setValue:[message priority] forKey:@"priority"];
+    [messageDictionary setValue:[NSNumber numberWithUnsignedInteger:[[message.campaign downloadDate] timeIntervalSince1970]] forKey:@"downloadDate"];
+    [messageDictionary setValue:[NSNumber numberWithUnsignedInteger:[[message.campaign dateStart] timeIntervalSince1970]] forKey:@"dateStart"];
+    [messageDictionary setValue:[NSNumber numberWithUnsignedInteger:[[message.campaign dateEnd] timeIntervalSince1970]] forKey:@"dateEnd"];
+    if([message type] == SwrveEmbeddedDataTypeJson) {
+        [messageDictionary setValue:@"json" forKey:@"type"];
+    } else {
+        [messageDictionary setValue:@"other" forKey:@"type"];
+    }
+    [messageDictionary setValue:[message data] forKey:@"data"];
+    [messageDictionary setValue:[message dataRaw] forKey:@"dataRaw"];
+    [messageDictionary setValue:@([message control]) forKey:@"control"];
+    
+    // convert the status to a readable format so its consistent across both platforms
+    NSMutableDictionary *stateDictionary = [NSMutableDictionary dictionaryWithDictionary:[[[message campaign] state] asDictionary]];
+    NSUInteger statusNumber = [[stateDictionary objectForKey:@"status"] integerValue];
+    [stateDictionary setObject:[self translateCampaignStatus:statusNumber] forKey:@"status"];
+    [messageDictionary setObject:stateDictionary forKey:@"state"];
+    
+    NSArray *buttons = [message buttons];
+    if (buttons != nil) {
+        [messageDictionary setObject:buttons forKey:@"buttons"];
+    } else {
+        [messageDictionary setObject:@[] forKey:@"buttons"];
+    }
+    
+    return messageDictionary;
 }
 
 - (NSMutableDictionary *)mapSwrvePushInboxMessageToJSON:(SwrvePushInboxMessage *)pushInboxMessage {

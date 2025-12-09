@@ -6,6 +6,7 @@ import com.facebook.react.bridge.JavaOnlyArray
 import com.facebook.react.bridge.JavaOnlyMap
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
+import com.facebook.soloader.SoLoader
 import com.google.common.truth.Truth
 import com.swrve.sdk.Swrve
 import com.swrve.sdk.SwrveIAPRewards
@@ -67,6 +68,7 @@ class SwrvePluginModuleTest : SwrveBaseMockitoTest() {
     @Throws(Exception::class)
     override fun setUp() {
         super.setUp()
+        SoLoader.init(mockReactApplicationContext?.applicationContext, false)
         spyPluginModule = spy(SwrvePluginModule(mockReactApplicationContext, mockeEventEmitter!!))
         doReturn(mockActivity).`when`(mockReactApplicationContext)!!.currentActivity
         SwrveTestUtils.setSDKInstance(mockSwrve)
@@ -221,7 +223,7 @@ class SwrvePluginModuleTest : SwrveBaseMockitoTest() {
     @Test
     fun testRefreshCampaignsAndResources() {
         spyPluginModule?.refreshCampaignsAndResources()
-        verify<Swrve>(mockSwrve).refreshCampaignsAndResources()
+        verify<Swrve>(mockSwrve).refreshContent(null)
     }
 
     @Test
@@ -271,6 +273,18 @@ class SwrvePluginModuleTest : SwrveBaseMockitoTest() {
     fun testMessageCenterCampaigns() {
         spyPluginModule?.getMessageCenterCampaigns(null, mockPromise)
         verify<Swrve>(mockSwrve, atLeastOnce()).messageCenterCampaigns
+    }
+
+    @Test
+    @Throws(ParseException::class)
+    fun testEmbeddedMessageCenterCampaigns_interactionOnly() {
+        try {
+            spyPluginModule?.getEmbeddedMessageCenterCampaigns(null, mockPromise)
+        } catch (e: NoClassDefFoundError) {
+            // RN WritableNativeArray requires native libs; not available in unit tests
+        }
+        // Verify the SDK method was invoked with null personalization
+        verify<Swrve>(mockSwrve, atLeastOnce()).getEmbeddedMessageCenterCampaigns(null)
     }
 
     @Test

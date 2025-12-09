@@ -3,6 +3,7 @@ package com.swrve.sdk
 import android.content.Context
 import com.swrve.reactnative.SwrveBaseMockitoTest
 import com.swrve.reactnative.SwrveTestUtils
+import junit.framework.TestCase.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.any
@@ -27,6 +28,11 @@ class SwrvePluginUtilsTest : SwrveBaseMockitoTest() {
     }
 
     @Test
+    fun testNativeSDKVersion() {
+        assertEquals("Unexpected native version being used.", "11.9.0", SwrveBase.getVersion())
+    }
+
+    @Test
     fun testSetSessionListener() {
         SwrvePluginUserUpdate(mockContext)
         verify<Swrve>(mockSwrve).setSessionListener(any())
@@ -37,8 +43,8 @@ class SwrvePluginUtilsTest : SwrveBaseMockitoTest() {
         doReturn("com.unittests").`when`(mockContext)?.packageName
         SwrvePluginUserUpdate(mockContext).sendSwrveUserUpdate()
         val map = HashMap<String, String>()
-        map["swrve.react_native_version"] = "0.73.4"
-        map["swrve.react_native_plugin_version"] = "6.0.0"
+        map["swrve.react_native_version"] = "0.80.1"
+        map["swrve.react_native_plugin_version"] = "6.1.0"
         map["swrve.react_native_new_arch_enabled"] = "false"
         verify<Swrve>(mockSwrve).userUpdate(map)
 
@@ -47,8 +53,8 @@ class SwrvePluginUtilsTest : SwrveBaseMockitoTest() {
         doReturn(true).`when`(spySwrvePluginUtils)?.isNewArchitectureEnabled()
         spySwrvePluginUtils.sendSwrveUserUpdate()
         val map2 = HashMap<String, String>()
-        map2["swrve.react_native_version"] = "0.73.4"
-        map2["swrve.react_native_plugin_version"] = "6.0.0"
+        map2["swrve.react_native_version"] = "0.80.1"
+        map2["swrve.react_native_plugin_version"] = "6.1.0"
         map2["swrve.react_native_new_arch_enabled"] = "true"
         verify<Swrve>(mockSwrve).userUpdate(map2)
     }
