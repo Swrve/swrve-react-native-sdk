@@ -76,9 +76,9 @@
     }];
 
     NSDictionary *userUpdates = @{
-            @"swrve.react_native_version": @"0.80.1",
-            @"swrve.react_native_plugin_version": @"6.1.0",
-            @"swrve.react_native_new_arch_enabled": @"false"
+            @"swrve.react_native_version": @"0.83.0",
+            @"swrve.react_native_plugin_version": @"7.0.0",
+            @"swrve.react_native_new_arch_enabled": @"true"
     };
     OCMVerify([self.swrve userUpdate:userUpdates]);
 }
@@ -198,6 +198,147 @@
     [self.plugin sendQueuedEvents];
 
     OCMVerify([self.swrve sendQueuedEvents]);
+}
+
+- (void)testRefreshContentSuccess {
+    // Stub refreshContent to capture the delegate and invoke it with success result
+    OCMStub([self.swrve refreshContent:[OCMArg checkWithBlock:^BOOL(id obj) {
+        if (obj && [obj conformsToProtocol:@protocol(SwrveRefreshContentDelegate)]) {
+            id<SwrveRefreshContentDelegate> delegate = (id<SwrveRefreshContentDelegate>)obj;
+            
+            // Create a success result
+            SwrveRefreshContentResult *result = [[SwrveRefreshContentResult alloc] 
+                init:SwrveRefreshContentResultCodeSUCCESS 
+                :@"" 
+                :200];
+            
+            // Call the delegate
+            [delegate onComplete:result];
+            return YES;
+        }
+        return NO;
+    }]]);
+    
+    XCTestExpectation *expectation = [self expectationWithDescription:@"refreshContent success"];
+    
+    [self.plugin refreshContentWithResolver:^(id result) {
+        // Verify the result dictionary
+        XCTAssertTrue([result isKindOfClass:[NSDictionary class]]);
+        NSDictionary *resultDict = (NSDictionary *)result;
+        XCTAssertEqualObjects(resultDict[@"resultCode"], @"SUCCESS");
+        XCTAssertEqualObjects(resultDict[@"errorMessage"], @"");
+        XCTAssertEqualObjects(resultDict[@"httpResponseCode"], @200);
+        [expectation fulfill];
+    } rejecter:^(NSString *code, NSString *message, NSError *error) {
+        XCTFail(@"Should not reject on success");
+        [expectation fulfill];
+    }];
+    
+    [self waitForExpectationsWithTimeout:2.0 handler:nil];
+    OCMVerify([self.swrve refreshContent:[OCMArg any]]);
+}
+
+- (void)testRefreshContentError {
+    // Stub refreshContent to capture the delegate and invoke it with error result
+    OCMStub([self.swrve refreshContent:[OCMArg checkWithBlock:^BOOL(id obj) {
+        if (obj && [obj conformsToProtocol:@protocol(SwrveRefreshContentDelegate)]) {
+            id<SwrveRefreshContentDelegate> delegate = (id<SwrveRefreshContentDelegate>)obj;
+            
+            // Create an error result
+            SwrveRefreshContentResult *result = [[SwrveRefreshContentResult alloc] 
+                init:SwrveRefreshContentResultCodeERROR 
+                :@"Network error" 
+                :500];
+            
+            // Call the delegate
+            [delegate onComplete:result];
+            return YES;
+        }
+        return NO;
+    }]]);
+    
+    XCTestExpectation *expectation = [self expectationWithDescription:@"refreshContent error"];
+    
+    [self.plugin refreshContentWithResolver:^(id result) {
+        // Verify the result dictionary contains error details
+        XCTAssertTrue([result isKindOfClass:[NSDictionary class]]);
+        NSDictionary *resultDict = (NSDictionary *)result;
+        XCTAssertEqualObjects(resultDict[@"resultCode"], @"ERROR");
+        XCTAssertEqualObjects(resultDict[@"errorMessage"], @"Network error");
+        XCTAssertEqualObjects(resultDict[@"httpResponseCode"], @500);
+        [expectation fulfill];
+    } rejecter:^(NSString *code, NSString *message, NSError *error) {
+        XCTFail(@"Should resolve, not reject, even on error result");
+        [expectation fulfill];
+    }];
+    
+    [self waitForExpectationsWithTimeout:2.0 handler:nil];
+    OCMVerify([self.swrve refreshContent:[OCMArg any]]);
+}
+
+- (void)testRefreshContentErrorUnknown {
+    // Stub refreshContent to capture the delegate and invoke it with unknown error result
+    OCMStub([self.swrve refreshContent:[OCMArg checkWithBlock:^BOOL(id obj) {
+        if (obj && [obj conformsToProtocol:@protocol(SwrveRefreshContentDelegate)]) {
+            id<SwrveRefreshContentDelegate> delegate = (id<SwrveRefreshContentDelegate>)obj;
+            
+            // Create an unknown error result
+            SwrveRefreshContentResult *result = [[SwrveRefreshContentResult alloc] 
+                init:SwrveRefreshContentResultCodeERROR_UNKNOWN 
+                :@"Unknown error occurred" 
+                :0];
+            
+            // Call the delegate
+            [delegate onComplete:result];
+            return YES;
+        }
+        return NO;
+    }]]);
+    
+    XCTestExpectation *expectation = [self expectationWithDescription:@"refreshContent unknown error"];
+    
+    [self.plugin refreshContentWithResolver:^(id result) {
+        // Verify the result dictionary contains error details
+        XCTAssertTrue([result isKindOfClass:[NSDictionary class]]);
+        NSDictionary *resultDict = (NSDictionary *)result;
+        XCTAssertEqualObjects(resultDict[@"resultCode"], @"ERROR_UNKNOWN");
+        XCTAssertEqualObjects(resultDict[@"errorMessage"], @"Unknown error occurred");
+        XCTAssertEqualObjects(resultDict[@"httpResponseCode"], @0);
+        [expectation fulfill];
+    } rejecter:^(NSString *code, NSString *message, NSError *error) {
+        XCTFail(@"Should resolve, not reject, even on error result");
+        [expectation fulfill];
+    }];
+    
+    [self waitForExpectationsWithTimeout:2.0 handler:nil];
+    OCMVerify([self.swrve refreshContent:[OCMArg any]]);
+}
+
+- (void)testRefreshContentException {
+    // Stub refreshContent to throw an exception
+    OCMStub([self.swrve refreshContent:[OCMArg any]]).andThrow([NSException exceptionWithName:@"TestException" reason:@"Test exception" userInfo:nil]);
+    
+    XCTestExpectation *expectation = [self expectationWithDescription:@"refreshContent exception"];
+    
+    [self.plugin refreshContentWithResolver:^(id result) {
+        XCTFail(@"Should not resolve when exception occurs");
+        [expectation fulfill];
+    } rejecter:^(NSString *code, NSString *message, NSError *error) {
+        // Verify that the exception was caught and rejected
+        XCTAssertEqualObjects(code, @"TestException");
+        XCTAssertEqualObjects(message, @"Test exception");
+        XCTAssertNotNil(error);
+        [expectation fulfill];
+    }];
+    
+    [self waitForExpectationsWithTimeout:2.0 handler:nil];
+}
+
+- (void)testRefreshCampaignsAndResources {
+    [self.plugin refreshCampaignsAndResources];
+    
+    // Verify that the deprecated method still calls refreshContent with nil delegate
+    OCMVerify([self.swrve refreshContent:nil]);
 }
 
 - (void)testCurrencyGiven {
@@ -423,9 +564,8 @@
     OCMStub([embeddedMessageMock name]).andReturn(@"some name");
     OCMStub([embeddedMessageMock priority]).andReturn([NSNumber numberWithInt:(9999)]);
     OCMStub([embeddedMessageMock type]).andReturn(SwrveEmbeddedDataTypeJson);
-    NSDictionary *rawDict = @{ @"hello": @"world" };
     OCMStub([embeddedMessageMock data]).andReturn(@"{\"hello\":\"world\"}");
-    OCMStub([embeddedMessageMock dataRaw]).andReturn(rawDict);
+    OCMStub([embeddedMessageMock dataRaw]).andReturn(@"{\"hello\":\"world\"}");
     OCMStub([embeddedMessageMock control]).andReturn(NO);
 
     SwrveCampaign *campaignMock = OCMClassMock([SwrveCampaign class]);
@@ -463,9 +603,9 @@
         XCTAssertEqual([[firstEmbeddedMessage objectForKey:@"dateEnd"] integerValue], 1362671700);
         XCTAssertEqualObjects([firstEmbeddedMessage objectForKey:@"type"], @"json");
         XCTAssertEqualObjects([firstEmbeddedMessage objectForKey:@"data"], @"{\"hello\":\"world\"}");
-        NSDictionary *mappedRaw = [firstEmbeddedMessage objectForKey:@"dataRaw"];
+        NSString *mappedRaw = [firstEmbeddedMessage objectForKey:@"dataRaw"];
         XCTAssertNotNil(mappedRaw);
-        XCTAssertEqualObjects([mappedRaw objectForKey:@"hello"], @"world");
+        XCTAssertEqualObjects(mappedRaw, @"{\"hello\":\"world\"}");
         XCTAssertEqualObjects([firstEmbeddedMessage objectForKey:@"control"], @NO);
 
         NSDictionary *firstEmbeddedMessageState = [firstEmbeddedMessage objectForKey:@"state"];

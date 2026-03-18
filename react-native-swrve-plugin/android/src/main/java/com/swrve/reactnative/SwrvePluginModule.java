@@ -37,6 +37,8 @@ import com.swrve.sdk.messaging.SwrveEmbeddedCampaign;
 import com.swrve.sdk.SwrvePushInboxMessage;
 import com.swrve.sdk.SwrvePushInboxListener;
 import com.swrve.sdk.SwrvePushInboxListenerResult;
+import com.swrve.sdk.SwrveRefreshContentListener;
+import com.swrve.sdk.SwrveRefreshContentListenerResult;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 
 import org.json.JSONArray;
@@ -57,7 +59,7 @@ import java.util.TimeZone;
 
 public class SwrvePluginModule extends ReactContextBaseJavaModule {
 
-    public static String SWRVE_PLUGIN_VERSION = "6.1.0";
+    public static String SWRVE_PLUGIN_VERSION = "7.0.0";
     private final ReactApplicationContext reactContext;
     private final SwrvePluginEventEmitter eventEmitter;
 
@@ -479,6 +481,33 @@ public class SwrvePluginModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void refreshCampaignsAndResources() {
         SwrveSDK.refreshContent(null);
+    }
+
+    @ReactMethod
+    public void refreshContent(final Promise promise) {
+        SwrveLogger.v("SwrvePlugin: refreshContent()");
+        try {
+            SwrveSDK.refreshContent(new SwrveRefreshContentListener() {
+                @Override
+                public void onComplete(SwrveRefreshContentListenerResult result) {
+                    SwrveLogger.v("SwrvePlugin: refreshContent() - onComplete");
+                    
+                    String resultCode = (result.getResultCode() != null)
+                            ? result.getResultCode().name()
+                            : "ERROR_UNKNOWN";
+                    
+                    WritableMap resultMap = Arguments.createMap();
+                    resultMap.putString("resultCode", resultCode);
+                    resultMap.putString("errorMessage", result.getErrorMessage());
+                    resultMap.putInt("httpResponseCode", result.getHttpResponseCode());
+                    
+                    promise.resolve(resultMap);
+                }
+            });
+        } catch (Exception e) {
+            SwrveLogger.e("SwrvePlugin: refreshContent() - exception", e);
+            promise.reject(EXCEPTION, e.toString());
+        }
     }
 
     @ReactMethod

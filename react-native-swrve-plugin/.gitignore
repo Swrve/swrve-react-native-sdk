@@ -2,6 +2,13 @@
 #
 .DS_Store
 
+# XDE
+.expo/
+
+# VSCode
+.vscode/
+jsconfig.json
+
 # Xcode
 #
 build/
@@ -37,7 +44,12 @@ local.properties
 node_modules/
 npm-debug.log
 yarn-error.log
-yarn.lock
+
+# Build output
+lib/
+
+# Lint reports
+eslint-report.html
 
 # BUCK
 buck-out/

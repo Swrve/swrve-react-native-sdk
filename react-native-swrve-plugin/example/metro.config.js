@@ -1,8 +1,12 @@
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const path = require('path');
 const escape = require('escape-string-regexp');
-const exclusionList = require('metro-config/src/defaults/exclusionList');
 const pak = require('../package.json');
+
+// Define exclusionList inline since metro-config no longer exports it
+const exclusionList = (patterns) => {
+  return new RegExp(patterns.map((p) => p.source).join('|'));
+};
 
 const root = path.resolve(__dirname, '..');
 const modules = Object.keys({ ...pak.peerDependencies });

@@ -4,15 +4,25 @@ import { StyleSheet, View, Text } from 'react-native';
 import SwrveSDK from 'react-native-swrve-plugin';
 
 export default function App() {
-  const [result, setResult] = React.useState<number | undefined>();
+  const [isStarted, setIsStarted] = React.useState<boolean>(false);
+  const [userId, setUserId] = React.useState<string>('');
 
   React.useEffect(() => {
-    SwrveSDK.isStarted().then(setResult);
+    const fetchSDKInfo = async () => {
+      const started = await SwrveSDK.isStarted();
+      const user = await SwrveSDK.getUserId();
+
+      setIsStarted(started);
+      setUserId(user);
+    };
+
+    fetchSDKInfo();
   }, []);
 
   return (
     <View style={styles.container}>
-      <Text>SwrveSDK.isStarted: {result}</Text>
+      <Text>SwrveSDK.isStarted: {isStarted ? 'Yes' : 'No'}</Text>
+      <Text>SwrveSDK.getUserId: {userId || 'Loading...'}</Text>
     </View>
   );
 }
@@ -20,8 +30,9 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'center',
+    paddingLeft: 20,
   },
   box: {
     width: 60,

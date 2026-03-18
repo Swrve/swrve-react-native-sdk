@@ -2,6 +2,7 @@ package com.swrve.reactnative
 
 import android.app.Activity
 import android.content.Context
+import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.JavaOnlyArray
 import com.facebook.react.bridge.JavaOnlyMap
 import com.facebook.react.bridge.Promise
@@ -13,6 +14,8 @@ import com.swrve.sdk.SwrveIAPRewards
 import com.swrve.sdk.SwrveIdentityResponse
 import com.swrve.sdk.SwrveRealTimeUserPropertiesListener
 import com.swrve.sdk.SwrveSDK
+import com.swrve.sdk.SwrveRefreshContentListener
+import com.swrve.sdk.SwrveRefreshContentListenerResult
 import com.swrve.sdk.SwrveUserResourcesDiffListener
 import com.swrve.sdk.SwrveUserResourcesListener
 import com.swrve.sdk.messaging.SwrveBaseCampaign
@@ -35,6 +38,7 @@ import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.doAnswer
 import org.mockito.Mockito.doReturn
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.mockStatic
 import org.mockito.Mockito.never
 import org.mockito.Mockito.spy
 import org.mockito.Mockito.verify
@@ -224,6 +228,124 @@ class SwrvePluginModuleTest : SwrveBaseMockitoTest() {
     fun testRefreshCampaignsAndResources() {
         spyPluginModule?.refreshCampaignsAndResources()
         verify<Swrve>(mockSwrve).refreshContent(null)
+    }
+
+    @Test
+    fun testRefreshContentSuccess() {
+        mockStatic(Arguments::class.java).use { mockedArguments ->
+            // Mock Arguments.createMap() to return JavaOnlyMap
+            mockedArguments.`when`<JavaOnlyMap> { Arguments.createMap() }.thenAnswer { JavaOnlyMap() }
+
+            // Mock the SwrveSDK.refreshContent to capture listener and invoke it with success
+            doAnswer { invocation ->
+                val listener = invocation.getArgument<SwrveRefreshContentListener>(0)
+                val result = SwrveRefreshContentListenerResult(
+                    SwrveRefreshContentListenerResult.ResultCode.SUCCESS,
+                    "",
+                    200
+                )
+                listener.onComplete(result)
+                null
+            }.`when`(mockSwrve)!!.refreshContent(any())
+
+            spyPluginModule?.refreshContent(mockPromise)
+
+            // Verify that the listener was passed to the native SDK
+            verify<Swrve>(mockSwrve).refreshContent(any())
+
+            // Capture the argument passed to promise.resolve
+            val captor = ArgumentCaptor.forClass(Any::class.java)
+            verify(mockPromise)?.resolve(captor.capture())
+
+            // Verify the result map contains correct values
+            val resultMap = captor.value as com.facebook.react.bridge.WritableMap
+            Truth.assertThat(resultMap.getString("resultCode")).isEqualTo("SUCCESS")
+            Truth.assertThat(resultMap.getString("errorMessage")).isEqualTo("")
+            Truth.assertThat(resultMap.getInt("httpResponseCode")).isEqualTo(200)
+        }
+    }
+
+    @Test
+    fun testRefreshContentError() {
+        mockStatic(Arguments::class.java).use { mockedArguments ->
+            // Mock Arguments.createMap() to return JavaOnlyMap
+            mockedArguments.`when`<JavaOnlyMap> { Arguments.createMap() }.thenAnswer { JavaOnlyMap() }
+
+            // Mock the SwrveSDK.refreshContent to capture listener and invoke it with error
+            doAnswer { invocation ->
+                val listener = invocation.getArgument<SwrveRefreshContentListener>(0)
+                val result = SwrveRefreshContentListenerResult(
+                    SwrveRefreshContentListenerResult.ResultCode.ERROR,
+                    "Network error",
+                    500
+                )
+                listener.onComplete(result)
+                null
+            }.`when`(mockSwrve)!!.refreshContent(any())
+
+            spyPluginModule?.refreshContent(mockPromise)
+
+            // Verify that the listener was passed to the native SDK
+            verify<Swrve>(mockSwrve).refreshContent(any())
+
+            // Capture the argument passed to promise.resolve
+            val captor = ArgumentCaptor.forClass(Any::class.java)
+            verify(mockPromise)?.resolve(captor.capture())
+
+            // Verify the result map contains correct error values
+            val resultMap = captor.value as com.facebook.react.bridge.WritableMap
+            Truth.assertThat(resultMap.getString("resultCode")).isEqualTo("ERROR")
+            Truth.assertThat(resultMap.getString("errorMessage")).isEqualTo("Network error")
+            Truth.assertThat(resultMap.getInt("httpResponseCode")).isEqualTo(500)
+        }
+    }
+
+    @Test
+    fun testRefreshContentErrorUnknown() {
+        mockStatic(Arguments::class.java).use { mockedArguments ->
+            // Mock Arguments.createMap() to return JavaOnlyMap
+            mockedArguments.`when`<JavaOnlyMap> { Arguments.createMap() }.thenAnswer { JavaOnlyMap() }
+
+            // Mock the SwrveSDK.refreshContent to capture listener and invoke it with unknown error
+            doAnswer { invocation ->
+                val listener = invocation.getArgument<SwrveRefreshContentListener>(0)
+                val result = SwrveRefreshContentListenerResult(
+                    SwrveRefreshContentListenerResult.ResultCode.ERROR_UNKNOWN,
+                    "Unknown error occurred",
+                    0
+                )
+                listener.onComplete(result)
+                null
+            }.`when`(mockSwrve)!!.refreshContent(any())
+
+            spyPluginModule?.refreshContent(mockPromise)
+
+            // Verify that the listener was passed to the native SDK
+            verify<Swrve>(mockSwrve).refreshContent(any())
+
+            // Capture the argument passed to promise.resolve
+            val captor = ArgumentCaptor.forClass(Any::class.java)
+            verify(mockPromise)?.resolve(captor.capture())
+
+            // Verify the result map contains correct error values
+            val resultMap = captor.value as com.facebook.react.bridge.WritableMap
+            Truth.assertThat(resultMap.getString("resultCode")).isEqualTo("ERROR_UNKNOWN")
+            Truth.assertThat(resultMap.getString("errorMessage")).isEqualTo("Unknown error occurred")
+            Truth.assertThat(resultMap.getInt("httpResponseCode")).isEqualTo(0)
+        }
+    }
+
+    @Test
+    fun testRefreshContentException() {
+        // Mock the SwrveSDK.refreshContent to throw an exception
+        doAnswer {
+            throw RuntimeException("Test exception")
+        }.`when`(mockSwrve)!!.refreshContent(any())
+
+        spyPluginModule?.refreshContent(mockPromise)
+
+        // Verify that the promise was rejected with the exception
+        verify(mockPromise)?.reject(ArgumentMatchers.anyString(), ArgumentMatchers.anyString())
     }
 
     @Test

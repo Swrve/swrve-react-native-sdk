@@ -52,6 +52,50 @@
 
 @end
 
+@interface SwrveRefreshContentDelegateHandler : NSObject <SwrveRefreshContentDelegate>
+
+@property (nonatomic, copy) RCTPromiseResolveBlock resolve;
+@property (nonatomic, copy) RCTPromiseRejectBlock reject;
+
+- (instancetype)initWithResolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject;
+
+@end
+
+@implementation SwrveRefreshContentDelegateHandler
+
+- (instancetype)initWithResolver:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject {
+    self = [super init];
+    if (self) {
+        _resolve = [resolve copy];
+        _reject = [reject copy];
+    }
+    return self;
+}
+
+- (void)onComplete:(SwrveRefreshContentResult *)result {
+    if (result != nil) {
+        NSString *resultCode = @"";
+        if (result.resultCode == SwrveRefreshContentResultCodeSUCCESS) {
+            resultCode = @"SUCCESS";
+        } else if (result.resultCode == SwrveRefreshContentResultCodeERROR_UNKNOWN) {
+            resultCode = @"ERROR_UNKNOWN";
+        } else if (result.resultCode == SwrveRefreshContentResultCodeERROR) {
+            resultCode = @"ERROR";
+        }
+        
+        NSDictionary *resultDictionary = @{
+            @"resultCode": resultCode,
+            @"errorMessage": result.errorMessage,
+            @"httpResponseCode": @(result.httpResponseCode)
+        };
+        self.resolve(resultDictionary);
+    } else {
+        self.reject(EXCEPTION, @"No result provided", generalSwrveError(0));
+    }
+}
+
+@end
+
 @interface SwrvePushInboxUpdateHandler : NSObject <SwrvePushInboxUpdateDelegate>
 
     - (void)messagesUpdated;
@@ -560,6 +604,19 @@ RCT_REMAP_METHOD(getPersonalizedEmbeddedMessageData, getPersonalizedEmbeddedMess
 
 RCT_EXPORT_METHOD(refreshCampaignsAndResources) {
     [self.swrveInstance refreshContent:nil];
+}
+
+RCT_REMAP_METHOD(refreshContent,
+                 refreshContentWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject) {
+    NSLog(@"SwrvePlugin - refreshContent");
+    @try {
+        SwrveRefreshContentDelegateHandler *handler = [[SwrveRefreshContentDelegateHandler alloc] initWithResolver:resolve rejecter:reject];
+        [self.swrveInstance refreshContent:handler];
+    } @catch (NSException *ex) {
+        NSError *error = [SwrvePluginUtils produceErrorFromException:ex];
+        reject(ex.name, ex.reason, error);
+    }
 }
 
 #pragma mark - listening functions

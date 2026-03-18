@@ -11,6 +11,7 @@ import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 import com.swrve.sdk.SwrveLogger;
+import com.swrve.sdk.messaging.SwrveActionType;
 import com.swrve.sdk.messaging.SwrveEmbeddedMessage;
 import com.swrve.sdk.messaging.SwrveInAppMessageListener;
 import com.swrve.sdk.messaging.SwrveMessageButtonDetails;
@@ -125,7 +126,7 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule {
     protected void onMessageDetailDelegate(SwrveInAppMessageListener.SwrveMessageAction action, SwrveMessageDetails messageDetails, SwrveMessageButtonDetails selectedButton) {
         try {
             WritableMap params = Arguments.createMap();
-            params.putString(CALLBACK_KEY_MESSAGE_DETAIL_ACTION, action.toString());
+            params.putString(CALLBACK_KEY_MESSAGE_DETAIL_ACTION, mapMessageActionToString(action));
             JSONObject json = messageDetailsToJson(messageDetails);
             params.putMap(CALLBACK_KEY_MESSAGE_DETAIL_MAP, SwrvePluginUtils.convertJsonToMap(json));
             if (selectedButton != null) {
@@ -235,11 +236,51 @@ public class SwrvePluginEventEmitter extends ReactContextBaseJavaModule {
         String buttonText = buttonDetails.getButtonText() == null ? "" : buttonDetails.getButtonText();
         selectedButton.put("buttonText", buttonText);
 
-        String actionType = buttonDetails.getActionType() == null ? "" : buttonDetails.getActionType().toString();
+        String actionType = buttonDetails.getActionType() == null ? "" : mapActionTypeToString(buttonDetails.getActionType());
         selectedButton.put("actionType", actionType);
 
         String actionString = buttonDetails.getActionString() == null ? "" : buttonDetails.getActionString();
         selectedButton.put("actionString", actionString);
         return selectedButton;
+    }
+
+    private String mapMessageActionToString(SwrveInAppMessageListener.SwrveMessageAction action) {
+        switch (action) {
+            case Impression:
+                return "Impression";
+            case Custom:
+                return "Custom";
+            case Dismiss:
+                return "Dismiss";
+            case CopyToClipboard:
+                return "Clipboard"; // Normalize to match iOS
+            default:
+                return action.toString();
+        }
+    }
+
+    private String mapActionTypeToString(SwrveActionType actionType) {
+        switch (actionType) {
+            case Dismiss:
+                return "Dismiss";
+            case Custom:
+                return "Custom";
+            case Install:
+                return "Install";
+            case CopyToClipboard:
+                return "Clipboard"; // Normalize to match iOS
+            case RequestCapabilty:
+                return "Capability"; // Fix typo and normalize
+            case PageLink:
+                return "PageLink";
+            case OpenNotificationSettings:
+                return "OpenNotificationSettings";
+            case OpenAppSettings:
+                return "OpenAppSettings";
+            case StartGeo:
+                return "StartGeo";
+            default:
+                return "Unknown"; // Forward compatible
+        }
     }
 }

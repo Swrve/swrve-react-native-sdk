@@ -2,6 +2,8 @@ import UIKit
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
+import SwrveSDK
+import SwrvePlugin
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -14,6 +16,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    
+    let config = SwrveConfig()
+    let YOUR_APP_ID: Int32 = 123
+    let YOUR_API_KEY = "YOUR_API_KEY"
+    SwrvePlugin.initWithAppID(YOUR_APP_ID, apiKey: YOUR_API_KEY, config: config)
+    
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()

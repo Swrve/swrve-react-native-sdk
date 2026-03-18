@@ -150,17 +150,18 @@ RCT_EXPORT_MODULE();
         SwrveMessageDetails *messageDetails = notification.userInfo[CALLBACK_KEY_MESSAGE_DETAIL_MAP];
         NSDictionary *messageDetailsDict = [self dictFromMessageDetailsObject:messageDetails];
 
-        NSDictionary *selectedButtonDict = @{};
+        NSMutableDictionary *body = [NSMutableDictionary dictionaryWithDictionary:@{
+                CALLBACK_KEY_MESSAGE_DETAIL_ACTION: messageAction,
+                CALLBACK_KEY_MESSAGE_DETAIL_MAP: messageDetailsDict
+        }];
+        
         if (notification.userInfo[CALLBACK_KEY_MESSAGE_DETAIL_SELECTED_BUTTON]) {
             SwrveMessageButtonDetails *selectedButton = notification.userInfo[CALLBACK_KEY_MESSAGE_DETAIL_SELECTED_BUTTON];
-            selectedButtonDict = [self dictFromSelectedButtonObject:selectedButton];
+            NSDictionary *selectedButtonDict = [self dictFromSelectedButtonObject:selectedButton];
+            body[CALLBACK_KEY_MESSAGE_DETAIL_SELECTED_BUTTON] = selectedButtonDict;
         }
 
-        [self sendEventWithName:MESSAGE_DETAILS_DELEGATE_EVENT_NAME body:@{
-                CALLBACK_KEY_MESSAGE_DETAIL_ACTION: messageAction,
-                CALLBACK_KEY_MESSAGE_DETAIL_MAP: messageDetailsDict,
-                CALLBACK_KEY_MESSAGE_DETAIL_SELECTED_BUTTON: selectedButtonDict
-        }];
+        [self sendEventWithName:MESSAGE_DETAILS_DELEGATE_EVENT_NAME body:body];
     }
 }
 
@@ -278,7 +279,7 @@ NSString *stringFromActionTypeEnum(SwrveActionType enumValue) {
         case kSwrveActionPageLink:
             return @"PageLink";
         case kSwrveActionOpenSettings:
-            return @"OpenSettings";
+            return @"OpenAppSettings"; // Normalize to match Android
         case kSwrveActionOpenNotificationSettings:
             return @"OpenNotificationSettings";
         case kSwrveActionStartGeo:
